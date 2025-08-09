@@ -1078,16 +1078,43 @@ def run(options, select):
     # Check makemkvcon path, resolves baremetal unique install issues
     # Docker container uses /usr/local/bin/makemkvcon
     makemkvcon_path = shutil.which("makemkvcon") or "/usr/local/bin/makemkvcon"
+
+    # Optional faketime support to work around MakeMKV key date checks
+    # Enable by setting environment variable MAKEMKV_FAKETIME, e.g. "2025-07-10 12:00:00"
+    faketime_spec = os.environ.get("MAKEMKV_FAKETIME") or getattr(cfg, "arm_config", {}).get("MAKEMKV_FAKETIME")
+
+    # Build the command, optionally prefixed by faketime wrapper
+    cmd = []
+    popen_env = None
+    if faketime_spec:
+        faketime_bin = shutil.which("faketime")
+        if faketime_bin:
+            cmd.extend([faketime_bin, str(faketime_spec)])
+        else:
+            # Fall back to LD_PRELOAD if faketime wrapper is missing
+            popen_env = os.environ.copy()
+            popen_env["FAKETIME"] = str(faketime_spec)
+            # Try common libfaketime library locations
+            for candidate in (
+                "/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1",
+                "/usr/lib/faketime/libfaketime.so.1",
+                "/usr/lib64/faketime/libfaketime.so.1",
+            ):
+                if os.path.exists(candidate):
+                    ld_preload_current = popen_env.get("LD_PRELOAD", "")
+                    popen_env["LD_PRELOAD"] = f"{candidate}:{ld_preload_current}".rstrip(":")
+                    break
+
     # robot process of makemkvcon with
-    cmd = [
+    cmd.extend([
         makemkvcon_path,
         "--robot",
         "--messages=-stdout",
-    ]
+    ])
     cmd += list(options)
     buffer = []
     logging.debug(f"command: '{' '.join(cmd)}'")
-    with subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True) as proc:
+    with subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True, env=popen_env) as proc:
         logging.debug(f"PID {proc.pid}: command: '{' '.join(cmd)}'")
         for line in proc.stdout:
             line = line.rstrip(os.linesep)
