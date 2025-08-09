@@ -1086,7 +1086,10 @@ def run(options, select):
     # Build the command, optionally prefixed by faketime wrapper
     cmd = []
     popen_env = None
-    if faketime_spec:
+    # Only apply faketime for ripping operations, not for 'info' scans
+    primary_option = str(options[0]) if options else ""
+    apply_faketime = bool(faketime_spec and primary_option != "info")
+    if apply_faketime:
         faketime_bin = shutil.which("faketime")
         if faketime_bin:
             cmd.extend([faketime_bin, str(faketime_spec)])
