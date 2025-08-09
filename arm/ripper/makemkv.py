@@ -694,24 +694,30 @@ def makemkv(job):
     # Rip BluRay
     if (job.config.RIPMETHOD in ("backup", "backup_dvd")) and job.disctype == "bluray":
         try:
+            logging.debug("MakeMKV backup starting: rawpath=%s, dev=%s, mdisc=%s", rawpath, job.devpath, job.drive.mdisc)
             makemkv_backup(job, rawpath)
+            logging.debug("MakeMKV backup completed successfully")
         except MakeMkvRuntimeError as rip_err:
             logging.error(f"MakeMKV backup failed: {rip_err}. Starting ddrescue fallback...")
             iso_path = os.path.join(rawpath, f"{utils.clean_for_filename(job.title)}.iso")
             if ddrescue_iso(job, iso_path):
                 logging.info("ddrescue finished, retrying MakeMKV against ISO")
+                logging.debug("Retry MakeMKV backup with source=%s", f"iso:{iso_path}")
                 makemkv_backup(job, rawpath, source=f"iso:{iso_path}")
             else:
                 raise
     # Rip BluRay or DVD
     elif job.config.RIPMETHOD == "mkv" or job.disctype == "dvd":
         try:
+            logging.debug("MakeMKV mkv starting: rawpath=%s, dev=%s, mdisc=%s", rawpath, job.devpath, job.drive.mdisc)
             makemkv_mkv(job, rawpath)
+            logging.debug("MakeMKV mkv completed successfully")
         except MakeMkvRuntimeError as rip_err:
             logging.error(f"MakeMKV mkv failed: {rip_err}. Starting ddrescue fallback...")
             iso_path = os.path.join(rawpath, f"{utils.clean_for_filename(job.title)}.iso")
             if ddrescue_iso(job, iso_path):
                 logging.info("ddrescue finished, retrying MakeMKV against ISO")
+                logging.debug("Retry MakeMKV mkv with source=%s", f"iso:{iso_path}")
                 makemkv_mkv(job, rawpath, source=f"iso:{iso_path}")
             else:
                 raise
@@ -1098,7 +1104,14 @@ def _wrap_with_faketime(cmd: list[str]):
     env = None
 
     if faketime_bin:
-        return [faketime_bin, faketime_date] + cmd, env
+        wrapped_cmd = [faketime_bin, faketime_date] + cmd
+        logging.debug(
+            "faketime: using binary wrapping | date=%s | path=%s | cmd=%s",
+            faketime_date,
+            faketime_bin,
+            " ".join(wrapped_cmd),
+        )
+        return wrapped_cmd, env
 
     # Try LD_PRELOAD method as a fallback
     possible_lib_paths = [
@@ -1114,6 +1127,12 @@ def _wrap_with_faketime(cmd: list[str]):
             env["LD_PRELOAD"] = f"{lib}:{current_preload}" if current_preload else lib
             env["FAKETIME_NO_CACHE"] = "1"
             env["FAKETIME"] = faketime_date
+            logging.debug(
+                "faketime: using LD_PRELOAD wrapping | date=%s | lib=%s | LD_PRELOAD=%s",
+                faketime_date,
+                lib,
+                env.get("LD_PRELOAD"),
+            )
             break
 
     return cmd, env
@@ -1148,7 +1167,13 @@ def run(options, select):
     # Apply faketime if available
     cmd, faketime_env = _wrap_with_faketime(cmd)
     buffer = []
-    logging.debug(f"command: '{' '.join(cmd)}'")
+    logging.debug("MakeMKV exec: cmd=%s", " ".join(cmd))
+    if faketime_env:
+        logging.debug(
+            "MakeMKV exec env: FAKETIME=%s | LD_PRELOAD=%s",
+            faketime_env.get("FAKETIME"),
+            faketime_env.get("LD_PRELOAD"),
+        )
     with subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True, env=faketime_env) as proc:
         logging.debug(f"PID {proc.pid}: command: '{' '.join(cmd)}'")
         for line in proc.stdout:
@@ -1272,7 +1297,9 @@ def ddrescue_iso(job, iso_path: str) -> bool:
         iso_path,
         mapfile_path,
     ]
+    logging.debug("ddrescue first pass cmd: %s", " ".join(cmd_first_pass))
     rc = _run_logged_subprocess(cmd_first_pass)
+    logging.debug("ddrescue first pass exit code: %s", rc)
     if rc != 0:
         logging.warning(f"ddrescue first pass returned non-zero ({rc}). Will still attempt retry pass.")
 
@@ -1287,8 +1314,9 @@ def ddrescue_iso(job, iso_path: str) -> bool:
         mapfile_path,
     ]
     try:
-        subprocess.Popen(cmd_retry_pass, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-        logging.info("Started ddrescue refinement pass in background (-r3)")
+        logging.debug("ddrescue retry cmd: %s", " ".join(cmd_retry_pass))
+        bg_proc = subprocess.Popen(cmd_retry_pass, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        logging.info("Started ddrescue refinement pass in background (-r3), pid=%s", bg_proc.pid)
     except Exception as bg_err:  # noqa: BLE001
         logging.warning(f"Failed to start ddrescue refinement pass in background: {bg_err}")
 
