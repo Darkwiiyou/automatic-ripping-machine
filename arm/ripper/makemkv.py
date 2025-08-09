@@ -500,7 +500,7 @@ def parse_line(line):
     return msg_type, message
 
 
-def makemkv_info(job, select=None, index=9999, options=None, source=None):
+def makemkv_info(job, select=None, index=9999, options=None):
     """
     Use MakeMKV info to search the system for optical drives
 
@@ -547,11 +547,7 @@ def makemkv_info(job, select=None, index=9999, options=None, source=None):
     if not isinstance(options, list):
         raise TypeError(options)
     # 1MB cache size to get info on the specified disc(s)
-    info_options = ["info", "--cache=1"] + options
-    if source is None:
-        info_options += [f"disc:{index:d}"]
-    else:
-        info_options += [source]
+    info_options = ["info", "--cache=1"] + options + [f"disc:{index:d}"]
     wait_time = job.config.MANUAL_WAIT_TIME
     max_processes = job.config.MAX_CONCURRENT_MAKEMKVINFO
     job.status = JobState.VIDEO_WAITING.value
@@ -587,7 +583,7 @@ def get_drives(job):
             yield drive
 
 
-def makemkv_backup(job, rawpath, source=None):
+def makemkv_backup(job, rawpath):
     """
     Rip BluRay with Backup Method
 
@@ -604,14 +600,14 @@ def makemkv_backup(job, rawpath, source=None):
     cmd += [
         f"--minlength={job.config.MINLENGTH}",
         f"--progress={progress_log(job)}",
-        (f"disc:{job.drive.mdisc:d}" if source is None else source),
+        f"disc:{job.drive.mdisc:d}",
         rawpath,
     ]
     logging.info("Backing up disc")
     collections.deque(run(cmd, OutputType.MSG), maxlen=0)
 
 
-def makemkv_mkv(job, rawpath, source=None):
+def makemkv_mkv(job, rawpath):
     """
     Rip Blu-ray without enhanced protection or dvd disc
 
@@ -623,12 +619,12 @@ def makemkv_mkv(job, rawpath, source=None):
     mode = utils.get_drive_mode(job.devpath)
     logging.info(f"Job running in {mode} mode")
     # Get track info form mkv rip
-    get_track_info(job.drive.mdisc if source is None else source, job)
+    get_track_info(job.drive.mdisc, job)
     # route to ripping functions.
     if job.config.MAINFEATURE:
         logging.info("Trying to find mainfeature")
         track = Track.query.filter_by(job_id=job.job_id).order_by(Track.length.desc()).first()
-        rip_mainfeature(job, track, rawpath, source)
+        rip_mainfeature(job, track, rawpath)
     elif mode == 'manual':  # Run if mode is manual, user selects tracks
         # Set job status to waiting
         job.status = JobState.VIDEO_WAITING.value
@@ -638,7 +634,7 @@ def makemkv_mkv(job, rawpath, source=None):
             # Response from user provided, process requested tracks
             job.status = JobState.VIDEO_RIPPING.value
             db.session.commit()
-            process_single_tracks(job, rawpath, mode, source)
+            process_single_tracks(job, rawpath, mode)
         else:
             # Notify User: no action was taken
             title = "ARM is Sad - Job Abandoned"
@@ -655,7 +651,7 @@ def makemkv_mkv(job, rawpath, source=None):
         cmd += shlex.split(job.config.MKV_ARGS)
         cmd += [
             f"--progress={progress_log(job)}",
-            (f"dev:{job.devpath}" if source is None else source),
+            f"dev:{job.devpath}",
             "all",
             rawpath,
             f"--minlength={job.config.MINLENGTH}",
@@ -663,7 +659,7 @@ def makemkv_mkv(job, rawpath, source=None):
         logging.info("Process all tracks from disc.")
         collections.deque(run(cmd, OutputType.MSG), maxlen=0)
     else:
-        process_single_tracks(job, rawpath, 'auto', source)
+        process_single_tracks(job, rawpath, 'auto')
 
 
 def makemkv(job):
@@ -693,34 +689,10 @@ def makemkv(job):
     logging.info(f"Processing files to: {rawpath}")
     # Rip BluRay
     if (job.config.RIPMETHOD in ("backup", "backup_dvd")) and job.disctype == "bluray":
-        try:
-            logging.debug("MakeMKV backup starting: rawpath=%s, dev=%s, mdisc=%s", rawpath, job.devpath, job.drive.mdisc)
-            makemkv_backup(job, rawpath)
-            logging.debug("MakeMKV backup completed successfully")
-        except MakeMkvRuntimeError as rip_err:
-            logging.error(f"MakeMKV backup failed: {rip_err}. Starting ddrescue fallback...")
-            iso_path = os.path.join(rawpath, f"{utils.clean_for_filename(job.title)}.iso")
-            if ddrescue_iso(job, iso_path):
-                logging.info("ddrescue finished, retrying MakeMKV against ISO")
-                logging.debug("Retry MakeMKV backup with source=%s", f"iso:{iso_path}")
-                makemkv_backup(job, rawpath, source=f"iso:{iso_path}")
-            else:
-                raise
+        makemkv_backup(job, rawpath)
     # Rip BluRay or DVD
     elif job.config.RIPMETHOD == "mkv" or job.disctype == "dvd":
-        try:
-            logging.debug("MakeMKV mkv starting: rawpath=%s, dev=%s, mdisc=%s", rawpath, job.devpath, job.drive.mdisc)
-            makemkv_mkv(job, rawpath)
-            logging.debug("MakeMKV mkv completed successfully")
-        except MakeMkvRuntimeError as rip_err:
-            logging.error(f"MakeMKV mkv failed: {rip_err}. Starting ddrescue fallback...")
-            iso_path = os.path.join(rawpath, f"{utils.clean_for_filename(job.title)}.iso")
-            if ddrescue_iso(job, iso_path):
-                logging.info("ddrescue finished, retrying MakeMKV against ISO")
-                logging.debug("Retry MakeMKV mkv with source=%s", f"iso:{iso_path}")
-                makemkv_mkv(job, rawpath, source=f"iso:{iso_path}")
-            else:
-                raise
+        makemkv_mkv(job, rawpath)
     else:
         logging.info("I'm confused what to do....  Passing on MakeMKV")
     job.eject()
@@ -728,7 +700,7 @@ def makemkv(job):
     return rawpath
 
 
-def rip_mainfeature(job, track, rawpath, source=None):
+def rip_mainfeature(job, track, rawpath):
     """
     Find and rip only the main feature when using Blu-rays
 
@@ -746,7 +718,7 @@ def rip_mainfeature(job, track, rawpath, source=None):
     cmd += shlex.split(job.config.MKV_ARGS)
     cmd += [
         f"--progress={progress_log(job)}",
-        (f"dev:{job.devpath}" if source is None else source),
+        f"dev:{job.devpath}",
         track.track_number,
         rawpath,
         f"--minlength={job.config.MINLENGTH}",
@@ -756,7 +728,7 @@ def rip_mainfeature(job, track, rawpath, source=None):
     collections.deque(run(cmd, OutputType.MSG), maxlen=0)
 
 
-def process_single_tracks(job, rawpath, mode: str, source=None):
+def process_single_tracks(job, rawpath, mode: str):
     """
     Process single tracks by MakeMKV one at a time
 
@@ -798,7 +770,7 @@ def process_single_tracks(job, rawpath, mode: str, source=None):
             cmd += shlex.split(job.config.MKV_ARGS)
             cmd += [
                 f"--progress={progress_log(job)}",
-                (f"dev:{job.devpath}" if source is None else source),
+                f"dev:{job.devpath}",
                 track.track_number,
                 rawpath,
             ]
@@ -908,13 +880,7 @@ class TrackInfoProcessor:
         )
         options = []  # add relevant options here if needed
 
-        source = None
-        index = self.index
-        if isinstance(self.index, str) and (self.index.startswith("iso:") or self.index.startswith("file:")):
-            source = self.index
-            index = 9999
-
-        for message in makemkv_info(self.job, select=output_types, index=index, options=options, source=source):
+        for message in makemkv_info(self.job, select=output_types, index=self.index, options=options):
             self._process_message(message)
 
         # Add the last track if exists
@@ -1093,51 +1059,6 @@ class MakeMKVOutputChecker:
         return self.data
 
 
-def _wrap_with_faketime(cmd: list[str]):
-    """
-    Optionally wrap a command with faketime to fake the system time for child process.
-
-    The target date is 2025-07-10 10:00:00 (configurable via ARM_FAKETIME_DATE env).
-    """
-    faketime_date = os.environ.get("ARM_FAKETIME_DATE", "2025-07-10 10:00:00")
-    faketime_bin = shutil.which("faketime")
-    env = None
-
-    if faketime_bin:
-        wrapped_cmd = [faketime_bin, faketime_date] + cmd
-        logging.debug(
-            "faketime: using binary wrapping | date=%s | path=%s | cmd=%s",
-            faketime_date,
-            faketime_bin,
-            " ".join(wrapped_cmd),
-        )
-        return wrapped_cmd, env
-
-    # Try LD_PRELOAD method as a fallback
-    possible_lib_paths = [
-        "/usr/local/lib/faketime/libfaketime.so.1",
-        "/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1",
-        "/usr/lib64/faketime/libfaketime.so.1",
-        "/usr/lib/i386-linux-gnu/faketime/libfaketime.so.1",
-    ]
-    for lib in possible_lib_paths:
-        if os.path.exists(lib):
-            env = os.environ.copy()
-            current_preload = env.get("LD_PRELOAD", "")
-            env["LD_PRELOAD"] = f"{lib}:{current_preload}" if current_preload else lib
-            env["FAKETIME_NO_CACHE"] = "1"
-            env["FAKETIME"] = faketime_date
-            logging.debug(
-                "faketime: using LD_PRELOAD wrapping | date=%s | lib=%s | LD_PRELOAD=%s",
-                faketime_date,
-                lib,
-                env.get("LD_PRELOAD"),
-            )
-            break
-
-    return cmd, env
-
-
 def run(options, select):
     """
     Run makemkv with input cli options and yield selected messages
@@ -1164,17 +1085,9 @@ def run(options, select):
         "--messages=-stdout",
     ]
     cmd += list(options)
-    # Apply faketime if available
-    cmd, faketime_env = _wrap_with_faketime(cmd)
     buffer = []
-    logging.debug("MakeMKV exec: cmd=%s", " ".join(cmd))
-    if faketime_env:
-        logging.debug(
-            "MakeMKV exec env: FAKETIME=%s | LD_PRELOAD=%s",
-            faketime_env.get("FAKETIME"),
-            faketime_env.get("LD_PRELOAD"),
-        )
-    with subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True, env=faketime_env) as proc:
+    logging.debug(f"command: '{' '.join(cmd)}'")
+    with subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True) as proc:
         logging.debug(f"PID {proc.pid}: command: '{' '.join(cmd)}'")
         for line in proc.stdout:
             line = line.rstrip(os.linesep)
@@ -1257,72 +1170,3 @@ def manual_wait(job) -> bool:
                 notify(job, title, body)
 
     return user_ready
-
-
-def _run_logged_subprocess(cmd, cwd=None, env=None) -> int:
-    """
-    Run a subprocess streaming its stdout/stderr to logging and return exit code.
-    """
-    logging.info(f"Running: {' '.join(cmd)}")
-    with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=cwd, env=env) as proc:
-        for line in proc.stdout:
-            logging.info(line.rstrip("\n"))
-        proc.wait()
-        return proc.returncode or 0
-
-
-def ddrescue_iso(job, iso_path: str) -> bool:
-    """
-    Use ddrescue to create an ISO image from the optical disc as a fallback when MakeMKV fails.
-
-    Returns True on success, False otherwise.
-    """
-    # Ensure output directory exists
-    os.makedirs(os.path.dirname(iso_path), exist_ok=True)
-
-    ddrescue_bin = shutil.which("ddrescue") or shutil.which("gddrescue")
-    if not ddrescue_bin:
-        logging.error("ddrescue not found. Please install ddrescue/gddrescue to enable fallback.")
-        return False
-
-    mapfile_path = f"{iso_path}.map"
-
-    # First pass: no-scrape to create a baseline ISO quickly
-    cmd_first_pass = [
-        ddrescue_bin,
-        "-d",               # direct disc access
-        "-b", "2048",      # sector size for optical media
-        "-n",               # no-scrape first pass
-        str(job.devpath),
-        iso_path,
-        mapfile_path,
-    ]
-    logging.debug("ddrescue first pass cmd: %s", " ".join(cmd_first_pass))
-    rc = _run_logged_subprocess(cmd_first_pass)
-    logging.debug("ddrescue first pass exit code: %s", rc)
-    if rc != 0:
-        logging.warning(f"ddrescue first pass returned non-zero ({rc}). Will still attempt retry pass.")
-
-    # Start background refinement pass while MakeMKV processes ISO
-    cmd_retry_pass = [
-        ddrescue_bin,
-        "-d",
-        "-b", "2048",
-        "-r3",              # up to 3 retries on bad sectors
-        str(job.devpath),
-        iso_path,
-        mapfile_path,
-    ]
-    try:
-        logging.debug("ddrescue retry cmd: %s", " ".join(cmd_retry_pass))
-        bg_proc = subprocess.Popen(cmd_retry_pass, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-        logging.info("Started ddrescue refinement pass in background (-r3), pid=%s", bg_proc.pid)
-    except Exception as bg_err:  # noqa: BLE001
-        logging.warning(f"Failed to start ddrescue refinement pass in background: {bg_err}")
-
-    if not os.path.exists(iso_path) or os.path.getsize(iso_path) < 10 * 1024 * 1024:
-        logging.error("ddrescue produced an invalid or too-small ISO.")
-        return False
-
-    logging.info(f"ddrescue ISO created at {iso_path}")
-    return True
