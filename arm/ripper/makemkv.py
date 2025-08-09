@@ -1086,9 +1086,8 @@ def run(options, select):
     # Build the command, optionally prefixed by faketime wrapper
     cmd = []
     popen_env = None
-    # Only apply faketime for ripping operations, not for 'info' scans
-    primary_option = str(options[0]) if options else ""
-    apply_faketime = bool(faketime_spec and primary_option != "info")
+    # Apply faketime for all MakeMKV operations, including 'info' scans
+    apply_faketime = bool(faketime_spec)
     if apply_faketime:
         faketime_bin = shutil.which("faketime")
         if faketime_bin:
