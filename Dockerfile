@@ -2,7 +2,7 @@
 # setup default directories and configs
 # You can override ARM_DEPS_IMAGE at build time to use your forked image, e.g.
 #   docker build --build-arg ARM_DEPS_IMAGE=ghcr.io/darkwiiyou/arm-dependencies:latest .
-ARG ARM_DEPS_IMAGE=ghcr.io/darkwiiyou/arm-dependencies:latest
+ARG ARM_DEPS_IMAGE=darkwiiyou/arm-dependencies:latest
 FROM ${ARM_DEPS_IMAGE} AS base
 
 LABEL org.opencontainers.image.source=https://github.com/Darkwiiyou/automatic-ripping-machine#
