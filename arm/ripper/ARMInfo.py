@@ -49,8 +49,16 @@ class ARMInfo:
         branch_len = 10
         cmd = "cd /opt/arm && git branch && git log -1"
         git_output = ProcessHandler.arm_subprocess(cmd, True)
+        if not git_output:
+            self.git_branch = "unknown"
+            self.git_commit = "unknown"
+            return
+        try:
+            text = git_output.decode("utf-8", errors="ignore")
+        except Exception:
+            text = str(git_output)
         git_regex = r"\*\s(\S+)\n(?:\s*\S*\n){1,10}(?:commit )([a-z\d]{5,7})"
-        git_match = re.search(git_regex, str(git_output.decode("utf-8")))
+        git_match = re.search(git_regex, text)
 
         if git_match:
             (self.git_branch, self.git_commit) = git_match.groups()
