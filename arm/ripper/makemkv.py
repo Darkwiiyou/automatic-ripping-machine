@@ -1127,7 +1127,8 @@ def run(options, select):
     # Check makemkvcon path, resolves baremetal unique install issues
     # Docker container uses /usr/local/bin/makemkvcon
     makemkvcon_path = shutil.which("makemkvcon") or "/usr/local/bin/makemkvcon"
-    # robot process of makemkvcon with
+
+    # Build base command for makemkvcon
     cmd = [
         makemkvcon_path,
         "--robot",
@@ -1135,6 +1136,26 @@ def run(options, select):
     ]
     cmd += list(options)
     buffer = []
+
+    # Optional: run makemkv behind a time faker if configured
+    # Uses the libfaketime `faketime` wrapper if available
+    try:
+        timefake_enabled = bool(cfg.arm_config.get("MAKEMKV_TIMEFAKE_ENABLED", False))
+    except Exception:  # pragma: no cover - be defensive against unexpected types
+        timefake_enabled = False
+
+    if timefake_enabled:
+        faketime_bin = shutil.which("faketime")
+        time_str = str(cfg.arm_config.get("MAKEMKV_TIMEFAKE_VALUE", "2025-07-07 12:00:00"))
+        if faketime_bin:
+            cmd = [faketime_bin, time_str] + cmd
+            logging.info("Using faketime for MakeMKV with time '%s'", time_str)
+        else:
+            logging.warning(
+                "MAKEMKV_TIMEFAKE_ENABLED is true but 'faketime' binary was not found in PATH. "
+                "Proceeding without time faking."
+            )
+
     logging.debug(f"command: '{' '.join(cmd)}'")
     with subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True) as proc:
         logging.debug(f"PID {proc.pid}: command: '{' '.join(cmd)}'")

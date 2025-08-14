@@ -204,6 +204,15 @@ CHOWN_GROUP:
 # Storage for a purchased key the user may have paid for. Populating will prevent the beta key updater from running.
 MAKEMKV_PERMA_KEY: ""
 
+# Enable faking system time for MakeMKV calls using libfaketime's `faketime` wrapper
+# If enabled, ARM will prepend `faketime <MAKEMKV_TIMEFAKE_VALUE>` to makemkvcon invocations
+# Requires `faketime` to be available in PATH inside the runtime environment
+MAKEMKV_TIMEFAKE_ENABLED: false
+
+# Time string passed to `faketime`, e.g. "2025-07-07 12:00:00"
+# See libfaketime docs for accepted formats
+MAKEMKV_TIMEFAKE_VALUE: "2025-07-07 12:00:00"
+
 # Method of MakeMKV to use for Blu-ray discs
 # Options are "mkv", "backup", or "backup_dvd".
 # backup decrypts the dvd and then copies it to the hard drive.
