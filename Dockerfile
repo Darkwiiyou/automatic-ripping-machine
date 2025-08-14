@@ -1,6 +1,6 @@
 ###########################################################
 # setup default directories and configs
-FROM Darkwiiyou/arm-dependencies AS base
+FROM darkwiiyou/arm-dependencies AS base
 
 LABEL org.opencontainers.image.source=https://github.com/Darkwiiyou/automatic-ripping-machine#
 LABEL org.opencontainers.image.license=MIT
