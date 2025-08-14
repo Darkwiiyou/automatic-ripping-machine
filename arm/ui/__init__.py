@@ -6,6 +6,9 @@ from logging.config import dictConfig
 from flask import Flask, logging, current_app  # noqa: F401
 from flask.logging import default_handler  # noqa: F401
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
+import sqlite3
 from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_wtf import CSRFProtect
@@ -50,8 +53,14 @@ app.logger.info(f"Setting log level to: {cfg.arm_config['LOGLEVEL']}")
 app.logger.setLevel(cfg.arm_config['LOGLEVEL'])
 
 # Set Flask database connection configurations
-app.config['SQLALCHEMY_DATABASE_URI'] = sqlitefile
+app.config['SQLALCHEMY_DATABASE_URI'] = sqlitefile + "?timeout=30"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'connect_args': {
+        'timeout': 30
+    },
+    'pool_pre_ping': True
+}
 # We should really generate a key for each system
 app.config['SECRET_KEY'] = "Big secret key"  # TODO: make this random!
 # Set the global Flask Login state, set to True will ignore any @login_required
@@ -62,6 +71,19 @@ os.environ["WERKZEUG_DEBUG_PIN"] = "12345"  # make this random!
 app.logger.debug("Debugging pin: " + os.environ["WERKZEUG_DEBUG_PIN"])
 
 db = SQLAlchemy(app)
+
+# Improve SQLite concurrency behavior: WAL mode and busy timeout
+@event.listens_for(Engine, "connect")
+def _set_sqlite_pragma(dbapi_connection, connection_record):
+    try:
+        if isinstance(dbapi_connection, sqlite3.Connection):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL;")
+            cursor.execute("PRAGMA synchronous=NORMAL;")
+            cursor.execute("PRAGMA busy_timeout=5000;")
+            cursor.close()
+    except Exception:  # pragma: no cover
+        pass
 migrate = Migrate(app, db)
 
 # Register route blueprints

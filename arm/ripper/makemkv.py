@@ -26,6 +26,31 @@ from arm.ui import db
 import arm.config.config as cfg
 
 from arm.ripper.utils import notify
+def _run_makemkv_on_iso_async(job, iso_path: str, rawpath: str):
+    """
+    Launch MakeMKV to rip from a rescued ISO asynchronously.
+
+    Uses the same job config and output path.
+    """
+    # Build base makemkv command
+    # We invoke the same 'mkv' mode but point device to iso: path
+    cmd = [
+        shutil.which("makemkvcon") or "/usr/local/bin/makemkvcon",
+        "--robot",
+        "--messages=-stdout",
+        "mkv",
+    ]
+    cmd += shlex.split(job.config.MKV_ARGS)
+    cmd += [
+        f"--progress={progress_log(job)}",
+        f"iso:{iso_path}",
+        "all",
+        rawpath,
+        f"--minlength={job.config.MINLENGTH}",
+    ]
+    logging.debug(f"Launching async MakeMKV on ISO: {' '.join(cmd)}")
+    # Run in background without waiting; inherit env so faketime rules still apply via makemkv.run usage
+    subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
 
 MAKEMKV_INFO_WAIT_TIME = 60  # [s]
@@ -737,9 +762,32 @@ def makemkv(job):
     # Rip BluRay
     if (job.config.RIPMETHOD in ("backup", "backup_dvd")) and job.disctype == "bluray":
         makemkv_backup(job, rawpath)
-    # Rip BluRay or DVD
+    # Rip BluRay or DVD via MakeMKV
     elif job.config.RIPMETHOD == "mkv" or job.disctype == "dvd":
-        makemkv_mkv(job, rawpath)
+        try:
+            makemkv_mkv(job, rawpath)
+        except Exception as mkv_err:  # noqa: E722
+            logging.error(f"MakeMKV ripping failed: {mkv_err}")
+            # Fallback: create ISO via ddrescue and attempt MakeMKV on the ISO
+            try:
+                # Build ISO path in RAW_PATH/job title
+                iso_name = f"{job.title or 'disc'}.iso"
+                iso_dir = os.path.join(str(job.config.RAW_PATH), str(job.title))
+                utils.make_dir(iso_dir)
+                iso_path = os.path.join(iso_dir, iso_name)
+                logging.info(f"Attempting ddrescue fallback to ISO: {iso_path}")
+                if utils.rip_iso_with_ddrescue(job, iso_path):
+                    # Eject immediately so drive is free for next disc
+                    job.eject()
+                    # Now run MakeMKV asynchronously on the ISO to the same rawpath
+                    # Use makemkvcon with iso: path
+                    logging.info("Starting MakeMKV on rescued ISO in background...")
+                    _run_makemkv_on_iso_async(job, iso_path, rawpath)
+                    # Return rawpath so pipeline continues as normal (HB monitors this path)
+                else:
+                    logging.error("ddrescue ISO creation failed; cannot continue with fallback.")
+            except Exception as dd_fallback_err:  # noqa: E722
+                logging.error(f"ddrescue fallback failed: {dd_fallback_err}")
     else:
         logging.info("I'm confused what to do....  Passing on MakeMKV")
     job.eject()

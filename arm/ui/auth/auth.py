@@ -8,6 +8,7 @@ Covers
 - update_password [GET, POST]
 """
 from sqlite3 import OperationalError
+import time
 import bcrypt
 from flask import redirect, render_template, request, Blueprint, flash, app, session
 from flask_login import LoginManager, login_required, \
@@ -150,12 +151,17 @@ def load_user(user_id):
     :param user_id:
     :return:
     """
-    try:
-        return User.query.get(int(user_id))
-    except OperationalError as e:
-        app.logger.error("Error getting user")
-        app.logger.error(f"ERROR: {e}")
-        return None
+    retries = 5
+    for attempt in range(retries):
+        try:
+            return User.query.get(int(user_id))
+        except OperationalError as e:
+            if "locked" in str(e).lower() and attempt < retries - 1:
+                time.sleep(0.5)
+                continue
+            app.logger.error("Error getting user")
+            app.logger.error(f"ERROR: {e}")
+            return None
 
 
 @login_manager.unauthorized_handler

@@ -434,6 +434,57 @@ def rip_data(job):
     return success
 
 
+def rip_iso_with_ddrescue(job, iso_path: str) -> bool:
+    """
+    Create a raw ISO image of the disc using GNU ddrescue.
+
+    - Saves to iso_path (.iso)
+    - Uses a .map file alongside the ISO to allow resumed attempts
+    - Logs ddrescue output into the job logfile
+
+    Returns True on success (exit code 0), False otherwise.
+    """
+    # Ensure output directory exists
+    make_dir(os.path.dirname(iso_path))
+
+    # ddrescue parameters: first pass with defaults; allow user extra flags via DATA_RIP_PARAMETERS
+    map_path = iso_path + ".map"
+    log_path = os.path.join(job.config.LOGPATH, job.logfile)
+
+    # Prefer /usr/bin/ddrescue (gddrescue) where available
+    ddrescue_bin = shutil.which("ddrescue") or shutil.which("gddrescue")
+    if not ddrescue_bin:
+        logging.error("ddrescue is not installed. Please install gddrescue.")
+        return False
+
+    # Build command
+    # Example: ddrescue -n -b 2048 /dev/sr0 /path/to/out.iso /path/to/out.map
+    user_params = str(cfg.arm_config.get("DATA_RIP_PARAMETERS", "")).strip()
+    cmd = [
+        ddrescue_bin,
+        "-n",  # no-scrape first pass
+        "-b", "2048",  # optical sector size
+    ]
+    if user_params:
+        # Append additional user parameters (split on whitespace)
+        cmd += user_params.split()
+    cmd += [job.devpath, iso_path, map_path]
+
+    logging.info(f"Running ddrescue to create ISO: {' '.join(cmd)}")
+    try:
+        with open(log_path, "a", encoding="utf-8", errors="ignore") as lf:
+            proc = subprocess.run(cmd, stdout=lf, stderr=lf, check=False)
+        if proc.returncode == 0:
+            logging.info("ddrescue completed successfully.")
+            return True
+        else:
+            logging.error(f"ddrescue failed with exit code {proc.returncode}.")
+            return False
+    except Exception as error:  # noqa: E722
+        logging.error(f"ddrescue execution failed: {error}")
+        return False
+
+
 def set_permissions(directory_to_traverse):
     """
 

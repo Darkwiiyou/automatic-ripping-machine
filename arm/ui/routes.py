@@ -18,6 +18,8 @@ from flask import Flask, render_template, request, flash, \
 from flask.logging import default_handler  # noqa: F401
 from flask_login import LoginManager, login_required, \
     current_user, login_user, logout_user  # noqa: F401
+from sqlite3 import OperationalError
+import time
 from sqlalchemy.exc import SQLAlchemyError
 
 import arm.ui.utils as ui_utils
@@ -182,12 +184,17 @@ def load_user(user_id):
     :param user_id:
     :return:
     """
-    try:
-        return User.query.get(int(user_id))
-    except SQLAlchemyError as e:
-        app.logger.error("Error getting user")
-        app.logger.error(f"ERROR: {e}")
-        return None
+    retries = 5
+    for attempt in range(retries):
+        try:
+            return User.query.get(int(user_id))
+        except (SQLAlchemyError, OperationalError) as e:
+            if "locked" in str(e).lower() and attempt < retries - 1:
+                time.sleep(0.5)
+                continue
+            app.logger.error("Error getting user")
+            app.logger.error(f"ERROR: {e}")
+            return None
 
 
 @login_manager.unauthorized_handler
