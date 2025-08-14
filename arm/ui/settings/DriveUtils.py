@@ -28,8 +28,12 @@ class MaskSerialMeta(type):
         def masked_repr(self):
             """Mask the serial with asterisk in the repr"""
             repr_str = original_repr(self)
-            mask_last = self.serial[:-6] + '*' * 6
-            return repr_str.replace(self.serial, mask_last)
+            # Guard against missing or short serials
+            serial_value = self.serial if isinstance(self.serial, str) else ("" if self.serial is None else str(self.serial))
+            if not serial_value or len(serial_value) < 6:
+                return repr_str
+            mask_last = serial_value[:-6] + '*' * 6
+            return repr_str.replace(serial_value, mask_last)
 
         cls.__repr__ = masked_repr
 
@@ -70,10 +74,13 @@ class DriveInformation:
         """
         Handle (encoded characters like \x20)
         """
-        if isinstance(value, str):
-            return bytes(value, encoding="utf-8").decode("unicode_escape")
         if value is None:
             return ""
+        if isinstance(value, str):
+            try:
+                return bytes(value, encoding="utf-8").decode("unicode_escape")
+            except Exception:
+                return value
         return str(value).strip()
 
     def __post_init__(self):
