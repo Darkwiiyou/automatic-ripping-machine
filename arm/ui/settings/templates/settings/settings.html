@@ -180,6 +180,14 @@
                     if(data && data.success){ subtleToast("Apprise config saved"); }
                 });
             });
+
+            // Advanced JSON save (no redirect)
+            $("#jsonConfigForm").submit(function(e){
+                e.preventDefault();
+                $.post("/save_json_settings", $("#jsonConfigForm").serialize()).done(function(data){
+                    if(data && data.success){ subtleToast("JSON settings saved"); }
+                });
+            });
             $("#updateArm").submit(function (e) {
                 e.preventDefault();
                 sendSettings($("#updateArm"), "/update_arm")
