@@ -59,15 +59,16 @@ $(document).ready(function () {
  * @param    {Class} oldJob    Copy of old job
  */
 function updateProgress(job, oldJob) {
-    const subProgressBar = `<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
-                             aria-valuenow="${job.progress_round}" aria-valuemin="0" aria-valuemax="100" 
-                             style="width: ${job.progress_round}%">
-                             <small class="justify-content-center d-flex position-absolute w-100" style="color: black; z-index: 2;">
+    const subProgressBar = `<div class=\"progress-bar progress-bar-striped progress-bar-animated\" role=\"progressbar\" 
+                             aria-valuenow=\"${job.progress_round}\" aria-valuemin=\"0\" aria-valuemax=\"100\" 
+                             style=\"width: ${job.progress_round}%\">
+                             <small class=\"justify-content-center d-flex position-absolute w-100\" style=\"color: black; z-index: 2;\">
                              ${job.progress}%
                              </small></div></div>`;
-    const mainProgressBar = `<div id="jobId${job.job_id}_stage"><b>Stage: </b>${job.stage}</div>
-                             <div id="jobId${job.job_id}_progress" ><div class="progress">${subProgressBar}</div>
-                             <div id="jobId${job.job_id}_eta"><b>ETA: </b>${job.eta}</div>`;
+    // Use the same grid-based markup used elsewhere for alignment
+    const mainProgressBar = `<div id=\"jobId${job.job_id}_stage\" class=\"job-meta\"><span class=\"label\">Stage:</span><span>${job.stage}</span></div>
+                             <div id=\"jobId${job.job_id}_progress\" class=\"progress-indent\"><div class=\"progress\">${subProgressBar}</div></div>
+                             <div id=\"jobId${job.job_id}_eta\" class=\"job-meta\"><span class=\"label\">ETA:</span><span>${job.eta}</span></div>`;
     const progressSection = $(`#jobId${job.job_id}_progress_section`);
     const stage = $(`#jobId${job.job_id}_stage`);
     const eta = $(`#jobId${job.job_id}_eta`);
@@ -126,15 +127,26 @@ function checkTranscodeStatus(job) {
  */
 function updateContents(item, _job, keyString, itemContents) {
     if (item[0] === undefined) {
-        console.log(item)
+        console.log(item);
         return false;
     }
-    if (item[0].innerText.includes(itemContents)) {
-        //console.log("nothing to do - values are current")
+    // If using the aligned grid markup, keep structure and update only the value
+    if (item.hasClass('job-meta')) {
+        const labelSpan = item.find('span.label');
+        const valueSpan = item.find('span').last();
+        if (labelSpan.length) labelSpan.text(`${keyString}:`);
+        if (!valueSpan.length || valueSpan.text() !== String(itemContents)) {
+            if (valueSpan.length) {
+                valueSpan.text(itemContents);
+            } else {
+                item.html(`<span class="label">${keyString}:</span><span>${itemContents}</span>`);
+            }
+        }
     } else {
-        item[0].innerHTML = `<b> ${keyString}: </b>${itemContents}`;
-        console.log(`${item[0].innerText} - <b>${keyString}: </b>${itemContents}`)
-        console.log(item[0].innerText.includes(itemContents))
+        // Legacy fallback
+        if (!item[0].innerText.includes(itemContents)) {
+            item[0].innerHTML = `<b> ${keyString}: </b>${itemContents}`;
+        }
     }
     return true;
 }
@@ -148,9 +160,10 @@ function updateJobItem(oldJob, job) {
     const cardHeader = $(`#jobId${job.job_id}_header`);
     const posterUrl = $(`#jobId${job.job_id}_poster_url`);
     const status = $(`#jobId${job.job_id}_status`);
-    // Update card header ( Title (Year) )
-    if (cardHeader[0].innerText !== `${job.title} (${job.year})`) {
-        cardHeader[0].innerText = `${job.title} (${job.year})`;
+    // Update card header ( Title (Year) ) using same logic as initial render
+    const expectedHeader = titleManual(job);
+    if (cardHeader[0].innerText !== expectedHeader) {
+        cardHeader[0].innerText = expectedHeader;
     }
     // Update card poster image
     if (job.poster_url !== posterUrl[0].src && job.poster_url !== "None" && job.poster_url !== "N/A") {

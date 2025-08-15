@@ -61,23 +61,23 @@ function addJobItem(job, authenticated) {
 function transcodingCheck(job) {
     let x = "";
     if (job.status === "transcoding" && job.stage !== "" && job.progress || job.disctype === "music" && job.stage !== "") {
-        x += `<div id="jobId${job.job_id}_stage" class="job-meta"><span class="label">Stage:</span> ${job.stage}</div>`;
-        x += `<div id="jobId${job.job_id}_progress" >`;
+        x += `<div id="jobId${job.job_id}_stage" class="job-meta"><span class="label">Stage:</span><span>${job.stage}</span></div>`;
+        x += `<div id="jobId${job.job_id}_progress" class="progress-indent">`;
         x += `<div class="progress">
                 <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
                 aria-valuenow="${job.progress_round}" aria-valuemin="0" aria-valuemax="100"
                 style="width: ${job.progress_round}%; background-color: #6c757d;">
                 </div>
               </div></div>`;
-        x += `<div id="jobId${job.job_id}_eta" class="job-meta"><span class="label">ETA:</span> ${job.eta}</div>`;
+        x += `<div id="jobId${job.job_id}_eta" class="job-meta"><span class="label">ETA:</span><span>${job.eta}</span></div>`;
     }
     // YYYY-MM-DD
     const d = new Date(Date.parse(job.start_time));
     const datestring = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 
-    x += `<div class="job-meta"><span class="label">Start Date:</span> ${datestring}</div>`;
-    x += `<div class="job-meta"><span class="label">Start Time:</span> ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}</div>`;
-    x += `<div class="job-meta"><span class="label">Job Time:</span> ${job.job_length === undefined ? "Ongoing" : job.job_length}</div>`;
+    x += `<div class="job-meta"><span class="label">Start Date:</span><span>${datestring}</span></div>`;
+    x += `<div class="job-meta"><span class="label">Start Time:</span><span>${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}</span></div>`;
+    x += `<div class="job-meta"><span class="label">Job Time:</span><span>${job.job_length === undefined ? "Ongoing" : job.job_length}</span></div>`;
     return x;
 }
 
@@ -109,10 +109,11 @@ function posterCheck(job, small=false) {
 
 function titleManual(job) {
     let x;
+    const yearSuffix = job.year && job.year !== "None" ? ` (${job.year})` : "";
     if (job.title_manual !== "None") {
-        x = `${job.title_manual}(${job.year})`;
+        x = `${job.title_manual}${yearSuffix}`;
     } else {
-        x = `${job.title}(${job.year})`;
+        x = `${job.title}${yearSuffix}`;
     }
     return x;
 }
@@ -141,11 +142,12 @@ function buildRightSection(job, idsplit, authenticated) {
     }
     // Section 3 (Right Top) Contains Config.values
     x = "<div class=\"col-12\"><div class=\"card-body px-2 py-1\">";
+    // Ensure consistent IDs for live updates while keeping grid alignment
     x += `<div class=\"job-meta\"><span class=\"label\">Ripper:</span><span>${getRipperName(job, idsplit)}</span></div>`;
-    x += `<div class=\"job-meta\"><span class=\"label\">Rip Method:</span><span>${job.config.RIPMETHOD}</span></div>`;
-    x += `<div class=\"job-meta\"><span class=\"label\">Main Feature:</span><span>${job.config.MAINFEATURE}</span></div>`;
-    x += `<div class=\"job-meta\"><span class=\"label\">Min Length:</span><span>${job.config.MINLENGTH}</span></div>`;
-    x += `<div class=\"job-meta\"><span class=\"label\">Max Length:</span><span>${job.config.MAXLENGTH}</span></div>`;
+    x += `<div id=\"jobId${job.job_id}_RIPMETHOD\" class=\"job-meta\"><span class=\"label\">Rip Method:</span><span>${job.config.RIPMETHOD}</span></div>`;
+    x += `<div id=\"jobId${job.job_id}_MAINFEATURE\" class=\"job-meta\"><span class=\"label\">Main Feature:</span><span>${job.config.MAINFEATURE}</span></div>`;
+    x += `<div id=\"jobId${job.job_id}_MINLENGTH\" class=\"job-meta\"><span class=\"label\">Min Length:</span><span>${job.config.MINLENGTH}</span></div>`;
+    x += `<div id=\"jobId${job.job_id}_MAXLENGTH\" class=\"job-meta\"><span class=\"label\">Max Length:</span><span>${job.config.MAXLENGTH}</span></div>`;
     x += "</div>";
     // Section 3 (Right Bottom) Contains Buttons for arm json api
     // Only show when authenticated
