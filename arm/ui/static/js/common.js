@@ -41,12 +41,13 @@ function addJobItem(job, authenticated) {
     // Main holder for the 3 sections of info - includes 1 section (Poster img)
     // We need to check if idsplit is undefined, database page doesn't have splitid's
     if (idsplit[1] === undefined) {
-        x += `<div class="row no-gutters align-items-start"><div class="col-4"><a href="/jobdetail?job_id=${job.job_id}">${posterCheck(job, true)}</a></div>`;
+        x += `<div class="row no-gutters align-items-start"><div class="col-8 order-1">${buildMiddleSection(job)}</div><div class="col-4 order-2 d-flex justify-content-end">`+
+             `<a href="/jobdetail?job_id=${job.job_id}">${posterCheck(job, true)}</a></div>`;
     } else {
-        x += `<div class="row no-gutters align-items-start"><div class="col-4"><a href="${job.server_url}/jobdetail?job_id=${idsplit[1]}">${posterCheck(job, true)}</a></div>`;
+        x += `<div class="row no-gutters align-items-start"><div class="col-8 order-1">${buildMiddleSection(job)}</div><div class="col-4 order-2 d-flex justify-content-end">`+
+             `<a href="${job.server_url}/jobdetail?job_id=${idsplit[1]}">${posterCheck(job, true)}</a></div>`;
     }
-    // Section 2 (Middle)  Contains Job info (status, type, device, start time, progress)
-    x += buildMiddleSection(job);
+    // Section 2 (Middle) appended above to appear left, image right
     x += buildRightSection(job, idsplit, authenticated);
     // Close Job.card
     x += "</div></div></div>";
@@ -114,11 +115,11 @@ function titleManual(job) {
 
 function buildMiddleSection(job) {
     let x;
-    x = "<div class=\"col-8\"><div class=\"card-body px-2 py-2\">";
+    x = "<div class=\"card-body px-2 py-2\">";
     x += `<div id=\"jobId${job.job_id}_year\" class=\"job-meta\"><span class=\"label\">Year:</span><span>${job.year}</span></div>`;
     x += `<div id=\"jobId${job.job_id}_video_type\" class=\"job-meta\"><span class=\"label\">Type:</span><span>${job.video_type}</span></div>`;
     x += `<div id=\"jobId${job.job_id}_devpath\" class=\"job-meta\"><span class=\"label\">Device:</span><span>${job.devpath}</span></div>`;
-    x += `<div id=\"jobId${job.job_id}_progress_section\" class=\"progress-indent\">${transcodingCheck(job)}</div></div></div>`;
+    x += `<div id=\"jobId${job.job_id}_progress_section\" class=\"progress-indent\">${transcodingCheck(job)}</div></div>`;
     return x;
 }
 
