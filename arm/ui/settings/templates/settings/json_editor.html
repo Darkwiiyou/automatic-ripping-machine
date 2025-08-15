@@ -7,6 +7,7 @@
         Edit your configuration as raw JSON with validation. Invalid JSON will be highlighted and cannot be saved.
       </div>
       <form id="jsonConfigForm" method="post" action="/save_json_settings">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <textarea id="jsonConfig" name="jsonConfig" class="form-control code-editor" spellcheck="false" style="min-height: 60vh;">{{ settings | tojson(indent=2) }}</textarea>
         <small id="jsonError" class="form-text text-danger d-none"></small>
         <div class="d-flex justify-content-end mt-3">
