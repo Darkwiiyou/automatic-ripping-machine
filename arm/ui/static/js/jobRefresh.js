@@ -180,7 +180,7 @@ function updateJobItem(oldJob, job) {
     updateContents($(`#jobId${job.job_id}_start_time`), job, "Start Time", dt.time);
     updateContents($(`#jobId${job.job_id}_job_time`), job, "Job Time", job.job_length === undefined ? "Ongoing" : job.job_length);
     // Keep Stage/ETA values in sync with normalization
-    updateContents($(`#jobId${job.job_id}_stage`), job, "Stage", normalizeStage(job.stage, job));
+    updateContents($(`#jobId${job.job_id}_stage`), job, "Stage", computeDisplayStage(job));
     updateContents($(`#jobId${job.job_id}_eta`), job, "ETA", normalizeEta(job.eta));
     updateContents($(`#jobId${job.job_id}_RIPMETHOD`), job, "Rip Method", job.config.RIPMETHOD);
     updateContents($(`#jobId${job.job_id}_MAINFEATURE`), job, "Main Feature", job.config.MAINFEATURE);

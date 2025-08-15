@@ -115,8 +115,8 @@ function buildMiddleSection(job) {
     x += `<div id=\"jobId${job.job_id}_year\" class=\"job-meta\"><span class=\"label\">Year:</span><span>${job.year}</span></div>`;
     x += `<div id=\"jobId${job.job_id}_video_type\" class=\"job-meta\"><span class=\"label\">Type:</span><span>${job.video_type}</span></div>`;
     x += `<div id=\"jobId${job.job_id}_devpath\" class=\"job-meta\"><span class=\"label\">Device:</span><span>${job.devpath}</span></div>`;
-    // Stage row (always present for alignment). Use normalized stage text
-    x += `<div id=\"jobId${job.job_id}_stage\" class=\"job-meta\"><span class=\"label\">Stage:</span><span>${normalizeStage(job.stage, job)}</span></div>`;
+    // Stage row (always present for alignment). Use computed stage text
+    x += `<div id=\"jobId${job.job_id}_stage\" class=\"job-meta\"><span class=\"label\">Stage:</span><span>${computeDisplayStage(job)}</span></div>`;
     // Progress bar injected when active
     x += `<div id=\"jobId${job.job_id}_progress_section\" class=\"progress-indent\">${transcodingCheck(job)}</div>`;
     // ETA row (always present for alignment)
@@ -177,6 +177,26 @@ function normalizeEta(eta) {
     if (t.toLowerCase() === "unknown") return "Unknown";
     // Collapse overly verbose ETA strings
     return t.replace(/\s+/g, ' ');
+}
+
+// Derive a friendly stage from job.status and job.stage
+function computeDisplayStage(job) {
+    const status = String(job.status || '').toLowerCase();
+    const stage = normalizeStage(job.stage, job);
+    // Prefer explicit stage text when meaningful
+    if (stage && stage.toLowerCase() !== 'unknown') {
+        // If status implies a phase, prefix it for clarity
+        if (status === 'transcoding') return `Transcoding${stage ? ' - ' + stage : ''}`;
+        if (status === 'ripping') return `Ripping${stage ? ' - ' + stage : ''}`;
+        return stage;
+    }
+    // Fallbacks by status
+    if (status === 'info') return 'Scanning';
+    if (status === 'ripping') return 'Ripping';
+    if (status === 'transcoding') return 'Transcoding';
+    if (status === 'waiting' || status === 'waiting_transcode') return 'Waiting';
+    if (status === 'active') return 'Active';
+    return 'Unknown';
 }
 
 function buildRightSection(job, idsplit, authenticated) {
