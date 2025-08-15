@@ -13,6 +13,8 @@ Upstream project: [automatic-ripping-machine/automatic-ripping-machine](https://
   - Robust Start Date/Time/Job Time rendering (handles DB formats reliably)
   - Progress bar reworked with an in-bar percentage label (left‑anchored)
   - Stage display is smarter: clearly shows Scanning, Ripping, Transcoding, Waiting, and appends detailed steps when available (e.g., `Track 3/10`)
+- Advanced JSON config tool
+  - A more capable JSON editor for `arm.yaml` and UI settings (validation, better UX)
 - ddrescue integration
   - When ddrescue is used to create an ISO from damaged media, the UI shows stage, ETA, and progress parsed from ddrescue logs
   - Install helper included (see `arm-dependencies/scripts/install_ddrescue.sh`)
@@ -75,6 +77,39 @@ Example pulls:
 docker pull darkwiiyou/automatic-ripping-machine:latest
 docker pull darkwiiyou/arm-dependencies
 ```
+
+### Example docker-compose.yml
+
+```yaml
+services:
+  arm:
+    image: darkwiiyou/automatic-ripping-machine:latest
+    container_name: arm
+    devices:
+      - "/dev/sg0:/dev/sg0"
+      - "/dev/sg1:/dev/sg1"
+      - "/dev/sg2:/dev/sg2"
+      - "/dev/sg3:/dev/sg3"
+      - "/dev/sg4:/dev/sg4"
+      - "/dev/sr0:/dev/sr0"
+      - "/dev/sr1:/dev/sr1"
+      - "/dev/sr2:/dev/sr2"
+      - "/dev/sr3:/dev/sr3"
+    environment:
+      - PUID=1001
+      - PGID=1001
+    volumes:
+      - .:/home/arm
+      - ./config:/etc/arm/config
+      - ./media:/media
+      - ./output:/output
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+    privileged: true
+```
+
+Adjust the `devices` list to match the sg/sr nodes present on your host and set `PUID/PGID` to the user/group that should own created files.
 
 
 ## Usage
