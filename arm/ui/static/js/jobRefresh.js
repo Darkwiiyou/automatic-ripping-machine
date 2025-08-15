@@ -68,8 +68,6 @@ function updateProgress(job, oldJob) {
     // Use the same grid-based markup used elsewhere for alignment
     const mainProgressBar = `<div id="jobId${job.job_id}_progress" class="progress-indent">${progressHtml}</div>`;
     const progressSection = $(`#jobId${job.job_id}_progress_section`);
-    const stage = $(`#jobId${job.job_id}_stage`);
-    const eta = $(`#jobId${job.job_id}_eta`);
     const progressBarDiv = $(`#jobId${job.job_id}_progress`)
     if (checkTranscodeStatus(job)) {
         // Catch if the progress section is empty and populate it
@@ -87,8 +85,6 @@ function updateProgress(job, oldJob) {
                     progressBarDiv[0].innerHTML = progressHtml;
                 }
             }
-            updateContents(stage, job, "Stage", job.stage);
-            updateContents(eta, job, "ETA", job.eta);
         }
     }
 }
@@ -183,6 +179,9 @@ function updateJobItem(oldJob, job) {
     updateContents($(`#jobId${job.job_id}_start_date`), job, "Start Date", dt.date);
     updateContents($(`#jobId${job.job_id}_start_time`), job, "Start Time", dt.time);
     updateContents($(`#jobId${job.job_id}_job_time`), job, "Job Time", job.job_length === undefined ? "Ongoing" : job.job_length);
+    // Keep Stage/ETA values in sync with normalization
+    updateContents($(`#jobId${job.job_id}_stage`), job, "Stage", normalizeStage(job.stage, job));
+    updateContents($(`#jobId${job.job_id}_eta`), job, "ETA", normalizeEta(job.eta));
     updateContents($(`#jobId${job.job_id}_RIPMETHOD`), job, "Rip Method", job.config.RIPMETHOD);
     updateContents($(`#jobId${job.job_id}_MAINFEATURE`), job, "Main Feature", job.config.MAINFEATURE);
     updateContents($(`#jobId${job.job_id}_MINLENGTH`), job, "Min Length", job.config.MINLENGTH);

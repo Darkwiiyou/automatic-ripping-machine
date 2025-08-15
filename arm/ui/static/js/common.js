@@ -115,12 +115,12 @@ function buildMiddleSection(job) {
     x += `<div id=\"jobId${job.job_id}_year\" class=\"job-meta\"><span class=\"label\">Year:</span><span>${job.year}</span></div>`;
     x += `<div id=\"jobId${job.job_id}_video_type\" class=\"job-meta\"><span class=\"label\">Type:</span><span>${job.video_type}</span></div>`;
     x += `<div id=\"jobId${job.job_id}_devpath\" class=\"job-meta\"><span class=\"label\">Device:</span><span>${job.devpath}</span></div>`;
-    // Stage row (always present for alignment)
-    x += `<div id=\"jobId${job.job_id}_stage\" class=\"job-meta\"><span class=\"label\">Stage:</span><span>${job.stage ? job.stage : ""}</span></div>`;
+    // Stage row (always present for alignment). Use normalized stage text
+    x += `<div id=\"jobId${job.job_id}_stage\" class=\"job-meta\"><span class=\"label\">Stage:</span><span>${normalizeStage(job.stage, job)}</span></div>`;
     // Progress bar injected when active
     x += `<div id=\"jobId${job.job_id}_progress_section\" class=\"progress-indent\">${transcodingCheck(job)}</div>`;
     // ETA row (always present for alignment)
-    x += `<div id=\"jobId${job.job_id}_eta\" class=\"job-meta\"><span class=\"label\">ETA:</span><span>${job.eta ? job.eta : ""}</span></div>`;
+    x += `<div id=\"jobId${job.job_id}_eta\" class=\"job-meta\"><span class=\"label\">ETA:</span><span>${normalizeEta(job.eta)}</span></div>`;
     // Start date/time and job time always shown, with robust parsing
     const dt = formatStartDateTime(job.start_time);
     x += `<div id=\"jobId${job.job_id}_start_date\" class=\"job-meta\"><span class=\"label\">Start Date:</span><span>${dt.date}</span></div>`;
@@ -157,6 +157,26 @@ function formatStartDateTime(start_time) {
         console.log(e);
     }
     return { date: String(start_time), time: "" };
+}
+
+// Normalize stage text to avoid leaking raw numeric tokens
+function normalizeStage(stage, job) {
+    if (!stage) return "";
+    const s = String(stage).trim();
+    // Filter out long numeric-only tokens (e.g., timestamps)
+    if (/^\d{9,}$/.test(s)) return "Unknown";
+    // HandBrake encoding summary like "task 1 of 5" → keep
+    // MakeMKV short tokens like "Saving"/"Copying" kept as-is
+    // Audio ripping may report "Track: X/Y" already
+    return s;
+}
+
+function normalizeEta(eta) {
+    if (!eta) return "";
+    const t = String(eta).trim();
+    if (t.toLowerCase() === "unknown") return "Unknown";
+    // Collapse overly verbose ETA strings
+    return t.replace(/\s+/g, ' ');
 }
 
 function buildRightSection(job, idsplit, authenticated) {
