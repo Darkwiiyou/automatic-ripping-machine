@@ -118,7 +118,7 @@ function buildMiddleSection(job) {
     x += `<div id=\"jobId${job.job_id}_year\" class=\"job-meta\"><span class=\"label\">Year:</span> ${job.year}</div>`;
     x += `<div id=\"jobId${job.job_id}_video_type\" class=\"job-meta\"><span class=\"label\">Type:</span> ${job.video_type}</div>`;
     x += `<div id=\"jobId${job.job_id}_devpath\" class=\"job-meta\"><span class=\"label\">Device:</span> ${job.devpath}</div>`;
-    x += `<div id=\"jobId${job.job_id}_progress_section\">${transcodingCheck(job)}</div></div></div>`;
+    x += `<div id=\"jobId${job.job_id}_progress_section\" class=\"progress-indent\">${transcodingCheck(job)}</div></div></div>`;
     return x;
 }
 
