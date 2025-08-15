@@ -91,6 +91,10 @@ body {
 
 .job-meta {
   font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  line-height: 1.3;
+  margin: 2px 0;
 }
 .job-meta .label {
   color: #6c757d;
@@ -137,6 +141,22 @@ select.form-control {
 /* Align progress bars under values column */
 .progress-indent {
   margin-left: 128px; /* label width + padding */
+}
+
+/* JSON editor appearance */
+.code-editor {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  background: #f8f9fb;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+}
+
+[data-theme="dark"] .code-editor {
+  background: #1f2327;
+  color: #e6edf3;
+  border-color: #2e3338;
 }
 
 

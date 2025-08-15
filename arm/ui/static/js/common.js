@@ -115,9 +115,9 @@ function titleManual(job) {
 function buildMiddleSection(job) {
     let x;
     x = "<div class=\"col-8\"><div class=\"card-body px-2 py-2\">";
-    x += `<div id=\"jobId${job.job_id}_year\" class=\"job-meta\"><span class=\"label\">Year:</span> ${job.year}</div>`;
-    x += `<div id=\"jobId${job.job_id}_video_type\" class=\"job-meta\"><span class=\"label\">Type:</span> ${job.video_type}</div>`;
-    x += `<div id=\"jobId${job.job_id}_devpath\" class=\"job-meta\"><span class=\"label\">Device:</span> ${job.devpath}</div>`;
+    x += `<div class=\"job-meta\"><span class=\"label\">Year:</span><span>${job.year}</span></div>`;
+    x += `<div class=\"job-meta\"><span class=\"label\">Type:</span><span>${job.video_type}</span></div>`;
+    x += `<div class=\"job-meta\"><span class=\"label\">Device:</span><span>${job.devpath}</span></div>`;
     x += `<div id=\"jobId${job.job_id}_progress_section\" class=\"progress-indent\">${transcodingCheck(job)}</div></div></div>`;
     return x;
 }
@@ -134,11 +134,11 @@ function buildRightSection(job, idsplit, authenticated) {
     }
     // Section 3 (Right Top) Contains Config.values
     x = "<div class=\"col-12\"><div class=\"card-body px-2 py-1\">";
-    x += `<div class=\"job-meta\"><span class=\"label\">Ripper:</span> ${getRipperName(job, idsplit)}</div>`;
-    x += `<div class=\"job-meta\"><span class=\"label\">Rip Method:</span> ${job.config.RIPMETHOD}</div>`;
-    x += `<div class=\"job-meta\"><span class=\"label\">Main Feature:</span> ${job.config.MAINFEATURE}</div>`;
-    x += `<div class=\"job-meta\"><span class=\"label\">Min Length:</span> ${job.config.MINLENGTH}</div>`;
-    x += `<div class=\"job-meta\"><span class=\"label\">Max Length:</span> ${job.config.MAXLENGTH}</div>`;
+    x += `<div class=\"job-meta\"><span class=\"label\">Ripper:</span><span>${getRipperName(job, idsplit)}</span></div>`;
+    x += `<div class=\"job-meta\"><span class=\"label\">Rip Method:</span><span>${job.config.RIPMETHOD}</span></div>`;
+    x += `<div class=\"job-meta\"><span class=\"label\">Main Feature:</span><span>${job.config.MAINFEATURE}</span></div>`;
+    x += `<div class=\"job-meta\"><span class=\"label\">Min Length:</span><span>${job.config.MINLENGTH}</span></div>`;
+    x += `<div class=\"job-meta\"><span class=\"label\">Max Length:</span><span>${job.config.MAXLENGTH}</span></div>`;
     x += "</div>";
     // Section 3 (Right Bottom) Contains Buttons for arm json api
     // Only show when authenticated
