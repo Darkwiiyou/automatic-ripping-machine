@@ -41,13 +41,19 @@ function addJobItem(job, authenticated) {
     // Main holder for the 3 sections of info - includes 1 section (Poster img)
     // We need to check if idsplit is undefined, database page doesn't have splitid's
     if (idsplit[1] === undefined) {
-        x += `<div class="row no-gutters align-items-start"><div class="col-8 order-1">${buildMiddleSection(job)}</div><div class="col-4 order-2 d-flex justify-content-end">`+
-             `<a href="/jobdetail?job_id=${job.job_id}">${posterCheck(job, true)}</a></div>`;
+        x += `<div class="row no-gutters align-items-start">`+
+             `<div class="col-8">${buildMiddleSection(job)}</div>`+
+             `<div class="col-4 d-flex justify-content-end">`+
+             `<a href="/jobdetail?job_id=${job.job_id}">${posterCheck(job, true)}</a></div>`+
+             `</div>`;
     } else {
-        x += `<div class="row no-gutters align-items-start"><div class="col-8 order-1">${buildMiddleSection(job)}</div><div class="col-4 order-2 d-flex justify-content-end">`+
-             `<a href="${job.server_url}/jobdetail?job_id=${idsplit[1]}">${posterCheck(job, true)}</a></div>`;
+        x += `<div class="row no-gutters align-items-start">`+
+             `<div class="col-8">${buildMiddleSection(job)}</div>`+
+             `<div class="col-4 d-flex justify-content-end">`+
+             `<a href="${job.server_url}/jobdetail?job_id=${idsplit[1]}">${posterCheck(job, true)}</a></div>`+
+             `</div>`;
     }
-    // Section 2 (Middle) appended above to appear left, image right
+    // Section 2 (Middle) closed; image is on the right consistently
     x += buildRightSection(job, idsplit, authenticated);
     // Close Job.card
     x += "</div></div></div>";
