@@ -86,9 +86,24 @@ def process_logfile(logfile, job, job_results):
     """
     app.logger.debug(f"Disc Type: {job.disctype}, Status: {job.status}")
     if job.disctype in {"dvd", "bluray"}:
+        # Show scanning state explicitly
+        if job.status == JobState.VIDEO_INFO.value or job.status == JobState.VIDEO_WAITING.value:
+            job.stage = job_results['stage'] = "Scanning disc"
+            job.progress = job_results['progress'] = 0
+            job.progress_round = job_results['progress_round'] = 0
+            job.eta = job_results['eta'] = "Unknown"
+            return job_results
+
         if job.status == JobState.VIDEO_RIPPING.value:
+            # Detect ddrescue activity by parsing the main job logfile
+            tail_lines = read_log_line(logfile)
+            last_text = " ".join([l.decode('utf-8', errors='ignore') if isinstance(l, (bytes, bytearray)) else str(l) for l in tail_lines])
+            if re.search(r"rescued:\s*\d+\.\d+%", last_text) or "ddrescue" in last_text.lower():
+                app.logger.debug("detected ddrescue activity - parsing ddrescue logfile")
+                return process_ddrescue_logfile(logfile, job, job_results)
             app.logger.debug("using mkv - " + logfile)
             return process_makemkv_logfile(job, job_results)
+
         if job.status == JobState.TRANSCODE_ACTIVE.value:
             app.logger.debug("using handbrake")
             return process_handbrake_logfile(logfile, job, job_results)
@@ -131,6 +146,16 @@ def process_makemkv_logfile(job, job_results):
     if job_stage_index is not None:
         try:
             current_index = f"{(int(job_stage_index.group(1)) + 1)}/{job.no_of_titles} - {job_stage_index.group(2)}"
+            # If faketime is used, prefix the stage to indicate
+            try:
+                # Inspect last few lines of job logfile for faketime mention
+                job_log = os.path.join(cfg.arm_config['LOGPATH'], str(job.logfile))
+                tail = read_log_line(job_log)
+                tail_text = " ".join([l.decode('utf-8', errors='ignore') if isinstance(l, (bytes, bytearray)) else str(l) for l in tail])
+                if "Using faketime for MakeMKV" in tail_text:
+                    current_index = f"MakeMKV (faketime) - {current_index}"
+            except Exception:
+                pass
             job.stage = job_results['stage'] = current_index
             db.session.commit()
         except Exception as error:
@@ -138,6 +163,42 @@ def process_makemkv_logfile(job, job_results):
 
     job.eta = "Unknown"
 
+    return job_results
+
+
+def process_ddrescue_logfile(logfile, job, job_results):
+    """
+    Parse ddrescue progress from the job logfile.
+    Expects lines containing patterns like:
+      "rescued:  23.45%" and optionally "remaining time: 1h23m" or similar
+    """
+    tail = read_log_line(logfile)
+    percent = None
+    eta = None
+    for line in tail:
+        try:
+            text = line.decode('utf-8', errors='ignore') if isinstance(line, (bytes, bytearray)) else str(line)
+        except Exception:
+            text = str(line)
+        m_pct = re.search(r"rescued:\s*([0-9]+\.[0-9]+)%", text)
+        if m_pct:
+            percent = m_pct.group(1)
+        m_eta = re.search(r"remaining time:\s*([^\r\n]+)", text, flags=re.IGNORECASE)
+        if m_eta:
+            eta = m_eta.group(1).strip()
+
+    job.stage = job_results['stage'] = "ddrescue - creating ISO"
+    if percent is not None:
+        job.progress = job_results['progress'] = percent
+        try:
+            job.progress_round = job_results['progress_round'] = int(float(percent))
+        except Exception:
+            job.progress_round = job_results['progress_round'] = 0
+    else:
+        job.progress = job_results['progress'] = 0
+        job.progress_round = job_results['progress_round'] = 0
+
+    job.eta = job_results['eta'] = eta if eta else "Unknown"
     return job_results
 
 

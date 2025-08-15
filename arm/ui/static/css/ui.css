@@ -1,0 +1,82 @@
+/* General UI refinements for a cleaner, modern feel */
+
+:root {
+  --arm-bg: #f7f8fa;
+  --arm-card-radius: 12px;
+  --arm-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+body {
+  background: var(--arm-bg);
+}
+
+.navbar {
+  box-shadow: var(--arm-shadow);
+}
+
+#content {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.card {
+  border-radius: var(--arm-card-radius) !important;
+  box-shadow: var(--arm-shadow);
+  border: 0 !important;
+}
+
+.card-header {
+  border-top-left-radius: var(--arm-card-radius) !important;
+  border-top-right-radius: var(--arm-card-radius) !important;
+  background: #ffffff !important;
+  border-bottom: 1px solid #f0f2f4 !important;
+}
+
+.card-body {
+  padding: 1rem 1rem !important;
+}
+
+.progress {
+  height: 0.9rem;
+  background: #e6eaf0;
+  border-radius: 999px;
+}
+
+.progress-bar {
+  border-radius: 999px;
+}
+
+.img-thumbnail {
+  border-radius: 10px;
+  border-color: #f0f2f4;
+}
+
+/* Alerts spacing */
+#message1 {
+  margin: 0 0 1rem 0;
+}
+
+/* Footer spacing */
+#footer {
+  margin-top: 2rem;
+}
+
+/* Dark mode parity tweaks */
+[data-theme="dark"] body {
+  background: #222529;
+}
+
+[data-theme="dark"] .card-header {
+  background: #2c3136 !important;
+  border-bottom-color: #1f2327 !important;
+}
+
+[data-theme="dark"] .card {
+  box-shadow: none;
+}
+
+[data-theme="dark"] .progress {
+  background: #3a3f44;
+}
+
+
