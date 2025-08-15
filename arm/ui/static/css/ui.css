@@ -51,6 +51,8 @@ body {
   top: 50%;
   transform: translateY(-50%);
   font-size: 0.8rem;
+  color: black;
+  pointer-events: none;
 }
 
 .progress-bar {
