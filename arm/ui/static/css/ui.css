@@ -37,7 +37,7 @@ body {
 }
 
 .progress {
-  height: 0.9rem;
+  height: 0.5rem;
   background: #e6eaf0;
   border-radius: 999px;
 }
@@ -77,6 +77,39 @@ body {
 
 [data-theme="dark"] .progress {
   background: #3a3f44;
+}
+
+/* Compact card helpers */
+.card.compact .card-body {
+  padding: 0.5rem 0.75rem !important;
+}
+
+.poster-sm {
+  width: 120px;
+  height: auto;
+}
+
+.job-meta {
+  font-size: 0.9rem;
+}
+.job-meta .label {
+  color: #6c757d;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.35rem;
+}
+
+.actions-grid .btn {
+  padding: 0.35rem 0.5rem;
+}
+
+@media (max-width: 576px) {
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 
