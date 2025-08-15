@@ -63,7 +63,7 @@
                                 <th scope="col" style="cursor: pointer;">Log file</th>
                                 <th scope="col" style="cursor: pointer;">Created Time</th>
                                 <th scope="col" style="cursor: pointer;">Size(kb)</th>
-                                <th scope="col" colspan="4" style="cursor: default;" class="text-center" data-sorter="false">View modes</th>
+                                <th scope="col" colspan="5" style="cursor: default;" class="text-center" data-sorter="false">Actions</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -76,6 +76,7 @@
                                     <td><a href="logs?logfile={{ file[0] }}&mode=armcat">arm</a></td>
                                     <td><a href="logs?logfile={{ file[0] }}&mode=full">full</a></td>
                                     <td><a href="logreader?logfile={{ file[0] }}&mode=download">download</a></td>
+                                    <td><button class="btn btn-sm btn-danger" onclick="deleteLog('{{ file[0] }}', this)">delete</button></td>
                                 </tr>
                             {% endfor %}
                             </tbody>
@@ -115,5 +116,17 @@
             $("table").tablesorter();
         });
         activeTab("viewlogs");
+
+        window.deleteLog = function(logfile, btn) {
+            if (!confirm(`Delete log ${logfile}?`)) return;
+            $.post('/logs/delete', { logfile: logfile })
+                .done(function(resp){
+                    const row = btn.closest('tr');
+                    row.parentNode.removeChild(row);
+                })
+                .fail(function(xhr){
+                    alert('Failed to delete log: ' + (xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : 'unknown error'));
+                });
+        }
     </script>
 {% endblock %}

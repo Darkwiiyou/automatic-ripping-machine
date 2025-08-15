@@ -9,7 +9,7 @@ Covers
 import os
 from pathlib import Path
 from flask_login import LoginManager, login_required  # noqa: F401
-from flask import render_template, request, Blueprint, send_file, session
+from flask import render_template, request, Blueprint, send_file, session, jsonify
 from werkzeug.routing import ValidationError
 
 import arm.ui.utils as ui_utils
@@ -54,6 +54,23 @@ def listlogs(path):
     # Get all files in directory
     files = ui_utils.get_info(full_path)
     return render_template('logfiles.html', files=files, date_format=cfg.arm_config['DATE_FORMAT'])
+
+
+@route_logs.route('/logs/delete', methods=['POST'])
+@login_required
+def delete_log():
+    """Delete a log file by name in the configured log directory."""
+    logfile = request.form.get('logfile', '')
+    base_path = cfg.arm_config['LOGPATH']
+    full_path = os.path.join(base_path, logfile)
+    try:
+        ui_utils.validate_logfile(logfile, 'full', Path(full_path))
+        if os.path.exists(full_path):
+            os.remove(full_path)
+            return jsonify({'success': True})
+        return jsonify({'success': False, 'error': 'File not found'}), 404
+    except Exception as err:  # noqa: E722
+        return jsonify({'success': False, 'error': str(err)}), 400
 
 
 @route_logs.route('/logreader')

@@ -112,4 +112,30 @@ body {
   }
 }
 
+/* Settings polishing */
+.nav-tabs .nav-link {
+  padding: 0.5rem 0.75rem;
+}
+.tab-content .card,
+.tab-content .jumbotron {
+  border-radius: var(--arm-card-radius) !important;
+}
+.form-group label {
+  margin-bottom: 0.25rem;
+  color: #6c757d;
+}
+.form-control {
+  padding: 0.4rem 0.6rem;
+}
+.form-text {
+  color: #8892a0;
+  margin-top: 0.25rem;
+}
+
+/* Modernize selects */
+select.form-control {
+  appearance: auto;
+  background-image: none;
+}
+
 
