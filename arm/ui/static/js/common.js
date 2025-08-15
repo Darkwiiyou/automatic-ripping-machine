@@ -115,9 +115,9 @@ function titleManual(job) {
 function buildMiddleSection(job) {
     let x;
     x = "<div class=\"col-8\"><div class=\"card-body px-2 py-2\">";
-    x += `<div class=\"job-meta\"><span class=\"label\">Year:</span><span>${job.year}</span></div>`;
-    x += `<div class=\"job-meta\"><span class=\"label\">Type:</span><span>${job.video_type}</span></div>`;
-    x += `<div class=\"job-meta\"><span class=\"label\">Device:</span><span>${job.devpath}</span></div>`;
+    x += `<div id=\"jobId${job.job_id}_year\" class=\"job-meta\"><span class=\"label\">Year:</span><span>${job.year}</span></div>`;
+    x += `<div id=\"jobId${job.job_id}_video_type\" class=\"job-meta\"><span class=\"label\">Type:</span><span>${job.video_type}</span></div>`;
+    x += `<div id=\"jobId${job.job_id}_devpath\" class=\"job-meta\"><span class=\"label\">Device:</span><span>${job.devpath}</span></div>`;
     x += `<div id=\"jobId${job.job_id}_progress_section\" class=\"progress-indent\">${transcodingCheck(job)}</div></div></div>`;
     return x;
 }
