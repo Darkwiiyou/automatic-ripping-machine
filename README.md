@@ -1,6 +1,6 @@
-# Automatic Ripping Machine (ARM) — With faketime / ddrescue
+# Automatic Ripping Machine (ARM) — With ddrescue
 
-This repository is a user-focused fork of the upstream Automatic Ripping Machine, with a smoother UI and first-class support for faketime and ddrescue. It keeps the core functionality of ARM but improves day‑to‑day usability and resiliency.
+This repository is a user-focused fork of the upstream Automatic Ripping Machine, with a smoother UI and first-class support for ddrescue. It keeps the core functionality of ARM but improves day‑to‑day usability and resiliency.
 
 Upstream project: [automatic-ripping-machine/automatic-ripping-machine](https://github.com/automatic-ripping-machine/automatic-ripping-machine)
 
@@ -18,9 +18,6 @@ Upstream project: [automatic-ripping-machine/automatic-ripping-machine](https://
 - ddrescue integration
   - When ddrescue is used to create an ISO from damaged media, the UI shows stage, ETA, and progress parsed from ddrescue logs
   - Install helper included (see `arm-dependencies/scripts/install_ddrescue.sh`)
-- Optional faketime signal
-  - When MakeMKV is invoked under faketime, the UI labels the stage accordingly so it’s visible in Active Rips
-  - Install helper included (see `arm-dependencies/scripts/install_faketime.sh`)
 - Status naming consistency
   - Ripping/transcoding stages map to friendly names: Scanning → Ripping → Transcoding → Waiting → Finished
 
@@ -47,9 +44,6 @@ See upstream for a comprehensive feature list and docs: [ARM on GitHub](https://
 
 Everything from upstream applies. Additional options in this fork:
 
-- faketime (optional):
-  - Install via helper script: `arm-dependencies/scripts/install_faketime.sh`
-  - If the system is configured to run MakeMKV under faketime, Active Rips will display “MakeMKV (faketime)” in the stage.
 - ddrescue (optional but recommended for damaged media):
   - Install via helper script: `arm-dependencies/scripts/install_ddrescue.sh`
   - When enabled in your workflow, ddrescue progress is parsed and displayed in Active Rips.
@@ -58,7 +52,7 @@ Docker and manual installs follow the upstream instructions. Refer to the upstre
 
 ### Edited dependencies repo used by this fork
 
-This fork builds against an edited `arm-dependencies` repository to keep tooling current and enable faketime/ddrescue workflows. You can view the exact tree used here:
+This fork builds against an edited `arm-dependencies` repository to keep tooling current and enable ddrescue workflows. You can view the exact tree used here:
 
 - https://github.com/Darkwiiyou/arm-dependencies/tree/8b68241ecc23cef1d905cc747ab890041a266fe7
 

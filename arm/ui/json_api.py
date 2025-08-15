@@ -146,16 +146,6 @@ def process_makemkv_logfile(job, job_results):
     if job_stage_index is not None:
         try:
             current_index = f"{(int(job_stage_index.group(1)) + 1)}/{job.no_of_titles} - {job_stage_index.group(2)}"
-            # If faketime is used, prefix the stage to indicate
-            try:
-                # Inspect last few lines of job logfile for faketime mention
-                job_log = os.path.join(cfg.arm_config['LOGPATH'], str(job.logfile))
-                tail = read_log_line(job_log)
-                tail_text = " ".join([l.decode('utf-8', errors='ignore') if isinstance(l, (bytes, bytearray)) else str(l) for l in tail])
-                if "Using faketime for MakeMKV" in tail_text:
-                    current_index = f"MakeMKV (faketime) - {current_index}"
-            except Exception:
-                pass
             job.stage = job_results['stage'] = current_index
             db.session.commit()
         except Exception as error:

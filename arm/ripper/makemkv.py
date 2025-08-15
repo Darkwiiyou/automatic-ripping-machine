@@ -49,7 +49,7 @@ def _run_makemkv_on_iso_async(job, iso_path: str, rawpath: str):
         f"--minlength={job.config.MINLENGTH}",
     ]
     logging.debug(f"Launching async MakeMKV on ISO: {' '.join(cmd)}")
-    # Run in background without waiting; inherit env so faketime rules still apply via makemkv.run usage
+    # Run in background without waiting
     subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
 
@@ -1176,66 +1176,8 @@ def run(options, select):
     # Docker container uses /usr/local/bin/makemkvcon
     makemkvcon_path = shutil.which("makemkvcon") or "/usr/local/bin/makemkvcon"
 
-    # Optional faketime support to work around MakeMKV key date checks
-    # Two ways to enable:
-    #  - Environment variable MAKEMKV_FAKETIME='YYYY-MM-DD HH:MM:SS'
-    #  - Config keys MAKEMKV_TIMEFAKE_ENABLED/MAKEMKV_TIMEFAKE_VALUE
     cmd = []
     env_to_use = None
-    timefake_applied = False
-
-    # 1) Environment override takes precedence
-    faketime_spec = os.environ.get("MAKEMKV_FAKETIME") or getattr(cfg, "arm_config", {}).get("MAKEMKV_FAKETIME")
-    if faketime_spec:
-        faketime_bin = shutil.which("faketime")
-        if faketime_bin:
-            # Prefer explicit -f for clarity
-            cmd.extend([faketime_bin, "-f", str(faketime_spec)])
-            timefake_applied = True
-        else:
-            # Fall back to LD_PRELOAD if faketime wrapper is missing
-            env_to_use = os.environ.copy()
-            env_to_use["FAKETIME"] = str(faketime_spec)
-            # Try common libfaketime library locations
-            for candidate in (
-                "/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1",
-                "/usr/lib/faketime/libfaketime.so.1",
-                "/usr/lib64/faketime/libfaketime.so.1",
-                "/usr/lib/libfaketime.so.1",
-                "/lib/x86_64-linux-gnu/faketime/libfaketime.so.1",
-                "/lib64/faketime/libfaketime.so.1",
-                "/lib/libfaketime.so.1",
-            ):
-                if os.path.exists(candidate):
-                    ld_preload_current = env_to_use.get("LD_PRELOAD", "")
-                    env_to_use["LD_PRELOAD"] = f"{candidate}:{ld_preload_current}".rstrip(":")
-                    break
-            timefake_applied = True
-
-    # 2) Config toggle (used only if not already applied via env)
-    try:
-        timefake_enabled = bool(cfg.arm_config.get("MAKEMKV_TIMEFAKE_ENABLED", False))
-    except Exception:  # pragma: no cover - be defensive against unexpected types
-        timefake_enabled = False
-
-    if timefake_enabled and not timefake_applied:
-        faketime_bin = shutil.which("faketime")
-        time_str = str(cfg.arm_config.get("MAKEMKV_TIMEFAKE_VALUE", "2025-07-07 12:00:00"))
-        if faketime_bin:
-            cmd.extend([faketime_bin, "-f", time_str])
-            timefake_applied = True
-            logging.info("Using faketime for MakeMKV with time '%s'", time_str)
-        else:
-            logging.warning(
-                "MAKEMKV_TIMEFAKE_ENABLED is true but 'faketime' binary was not found in PATH. "
-                "Proceeding without time faking."
-            )
-
-    # Always avoid faking monotonic clocks if timefaking was requested
-    if timefake_applied:
-        if env_to_use is None:
-            env_to_use = os.environ.copy()
-        env_to_use["FAKETIME_DONTFAKE_MONOTONIC"] = "1"
 
     # robot process of makemkvcon with
     cmd.extend([
