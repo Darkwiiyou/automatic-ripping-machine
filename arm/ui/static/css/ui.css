@@ -4,7 +4,7 @@
   --arm-bg: #f7f8fa;
   --arm-card-radius: 12px;
   --arm-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  --arm-label-width: 120px;
+  --arm-label-width: 140px;
 }
 
 body {
@@ -102,6 +102,13 @@ body {
 .job-meta .label {
   color: #6c757d;
   text-align: left;
+}
+
+/* Poster anchored to the right without affecting text alignment */
+.poster-right {
+  position: absolute;
+  top: 8px;
+  right: 8px;
 }
 
 .actions-grid {

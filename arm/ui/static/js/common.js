@@ -39,18 +39,16 @@ function addJobItem(job, authenticated) {
             <img id="jobId${job.job_id}_status" src="static/img/${job.status}.png" height="18" alt="${job.status}" title="${job.status}">
           </div>`;
     // Main holder for the 3 sections of info - includes 1 section (Poster img)
-    // We need to check if idsplit is undefined, database page doesn't have splitid's
+    // Position text full-width, overlay poster on right for perfect left alignment
     if (idsplit[1] === undefined) {
-        x += `<div class="row no-gutters align-items-start">`+
-             `<div class="col-8">${buildMiddleSection(job)}</div>`+
-             `<div class="col-4 d-flex justify-content-end">`+
-             `<a href="/jobdetail?job_id=${job.job_id}">${posterCheck(job, true)}</a></div>`+
+        x += `<div class="position-relative">`+
+             `${buildMiddleSection(job)}`+
+             `<div class="poster-right"><a href="/jobdetail?job_id=${job.job_id}">${posterCheck(job, true)}</a></div>`+
              `</div>`;
     } else {
-        x += `<div class="row no-gutters align-items-start">`+
-             `<div class="col-8">${buildMiddleSection(job)}</div>`+
-             `<div class="col-4 d-flex justify-content-end">`+
-             `<a href="${job.server_url}/jobdetail?job_id=${idsplit[1]}">${posterCheck(job, true)}</a></div>`+
+        x += `<div class="position-relative">`+
+             `${buildMiddleSection(job)}`+
+             `<div class="poster-right"><a href="${job.server_url}/jobdetail?job_id=${idsplit[1]}">${posterCheck(job, true)}</a></div>`+
              `</div>`;
     }
     // Section 2 (Middle) closed; image is on the right consistently
@@ -125,7 +123,9 @@ function buildMiddleSection(job) {
     x += `<div id=\"jobId${job.job_id}_year\" class=\"job-meta\"><span class=\"label\">Year:</span><span>${job.year}</span></div>`;
     x += `<div id=\"jobId${job.job_id}_video_type\" class=\"job-meta\"><span class=\"label\">Type:</span><span>${job.video_type}</span></div>`;
     x += `<div id=\"jobId${job.job_id}_devpath\" class=\"job-meta\"><span class=\"label\">Device:</span><span>${job.devpath}</span></div>`;
-    x += `<div id=\"jobId${job.job_id}_progress_section\" class=\"progress-indent\">${transcodingCheck(job)}</div></div>`;
+    x += `<div id=\"jobId${job.job_id}_stage\" class=\"job-meta\"><span class=\"label\">Stage:</span><span></span></div>`;
+    x += `<div id=\"jobId${job.job_id}_progress_section\" class=\"progress-indent\">${transcodingCheck(job)}</div>`;
+    x += `</div>`;
     return x;
 }
 
