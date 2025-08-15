@@ -44,8 +44,8 @@ body {
   position: relative; /* Keep absolute labels (percent) inside the bar */
 }
 
-/* Left-aligned percentage label layered on top of the bar */
-.progress-label {
+/* Left-aligned percentage label layered on top of the bar (scoped to inside .progress only) */
+.progress .progress-label {
   position: absolute;
   left: 8px;
   top: 50%;
