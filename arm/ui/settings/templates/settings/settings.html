@@ -153,21 +153,32 @@
                 });
             }
 
+            function subtleToast(text){
+                addToast("Saved", text, Date.now());
+            }
             $("#uiSettings").submit(function (e) {
                 e.preventDefault();
-                sendSettings($("#uiSettings"), "/save_ui_settings");
+                $.post("/save_ui_settings", $("#uiSettings").serialize()).done(function(data){
+                    if(data && data.success){ subtleToast("UI settings saved"); }
+                });
             });
             $("#settings").submit(function (e) {
                 e.preventDefault();
-                sendSettings($("#ripperSettings"), "/save_settings");
+                $.post("/save_settings", $("#ripperSettings").serialize()).done(function(data){
+                    if(data && data.success){ subtleToast("Ripper settings saved"); }
+                });
             })
             $("#abcdeSettings").submit(function (e) {
                 e.preventDefault();
-                sendSettings($("#abcdeSettings"), "/save_abcde_settings");
+                $.post("/save_abcde_settings", $("#abcdeSettings").serialize()).done(function(data){
+                    if(data && data.success){ subtleToast("ABCDE config saved"); }
+                });
             });
             $("#appriseCfg").submit(function (e) {
                 e.preventDefault();
-                sendSettings($("#appriseCfg"), "/save_apprise_cfg");
+                $.post("/save_apprise_cfg", $("#appriseCfg").serialize()).done(function(data){
+                    if(data && data.success){ subtleToast("Apprise config saved"); }
+                });
             });
             $("#updateArm").submit(function (e) {
                 e.preventDefault();
