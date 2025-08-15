@@ -146,8 +146,9 @@ select.form-control {
 }
 
 /* Align progress bars under values column */
+/* Keep progress aligned with text but allow it to sit full-width when injected */
 .progress-indent {
-  margin-left: calc(var(--arm-label-width) + 8px); /* match grid gap */
+  margin-left: calc(var(--arm-label-width) + 8px);
 }
 
 /* JSON editor appearance */

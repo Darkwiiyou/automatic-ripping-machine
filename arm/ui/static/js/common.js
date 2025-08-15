@@ -62,7 +62,7 @@ function transcodingCheck(job) {
     let x = "";
     if (job.status === "transcoding" && job.stage !== "" && job.progress || job.disctype === "music" && job.stage !== "") {
         x += `<div id="jobId${job.job_id}_stage" class="job-meta"><span class="label">Stage:</span><span>${job.stage}</span></div>`;
-        x += `<div id="jobId${job.job_id}_progress" class="progress-indent">`;
+        x += `<div id="jobId${job.job_id}_progress">`;
         x += `<div class="progress">
                 <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
                 aria-valuenow="${job.progress_round}" aria-valuemin="0" aria-valuemax="100"
@@ -71,13 +71,6 @@ function transcodingCheck(job) {
               </div></div>`;
         x += `<div id="jobId${job.job_id}_eta" class="job-meta"><span class="label">ETA:</span><span>${job.eta}</span></div>`;
     }
-    // YYYY-MM-DD
-    const d = new Date(Date.parse(job.start_time));
-    const datestring = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-
-    x += `<div class="job-meta"><span class="label">Start Date:</span><span>${datestring}</span></div>`;
-    x += `<div class="job-meta"><span class="label">Start Time:</span><span>${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}</span></div>`;
-    x += `<div class="job-meta"><span class="label">Job Time:</span><span>${job.job_length === undefined ? "Ongoing" : job.job_length}</span></div>`;
     return x;
 }
 
@@ -124,10 +117,44 @@ function buildMiddleSection(job) {
     x += `<div id=\"jobId${job.job_id}_year\" class=\"job-meta\"><span class=\"label\">Year:</span><span>${job.year}</span></div>`;
     x += `<div id=\"jobId${job.job_id}_video_type\" class=\"job-meta\"><span class=\"label\">Type:</span><span>${job.video_type}</span></div>`;
     x += `<div id=\"jobId${job.job_id}_devpath\" class=\"job-meta\"><span class=\"label\">Device:</span><span>${job.devpath}</span></div>`;
-    x += `<div id=\"jobId${job.job_id}_stage\" class=\"job-meta\"><span class=\"label\">Stage:</span><span></span></div>`;
+    // Stage/Progress/ETA injected when active
     x += `<div id=\"jobId${job.job_id}_progress_section\" class=\"progress-indent\">${transcodingCheck(job)}</div>`;
+    // Start date/time and job time always shown, with robust parsing
+    const dt = formatStartDateTime(job.start_time);
+    x += `<div id=\"jobId${job.job_id}_start_date\" class=\"job-meta\"><span class=\"label\">Start Date:</span><span>${dt.date}</span></div>`;
+    x += `<div id=\"jobId${job.job_id}_start_time\" class=\"job-meta\"><span class=\"label\">Start Time:</span><span>${dt.time}</span></div>`;
+    x += `<div id=\"jobId${job.job_id}_job_time\" class=\"job-meta\"><span class=\"label\">Job Time:</span><span>${job.job_length === undefined ? "Ongoing" : job.job_length}</span></div>`;
     x += `</div>`;
     return x;
+}
+
+// Parse `YYYY-MM-DD HH:MM:SS[.ffffff]` robustly and return {date, time}
+function formatStartDateTime(start_time) {
+    if (!start_time) {
+        return { date: "unknown", time: "unknown" };
+    }
+    try {
+        let s = String(start_time).trim();
+        // Match common DB formats
+        const m = s.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})(?::\d{2})?(?:\.\d+)?/);
+        if (m) {
+            return { date: m[1], time: m[2] };
+        }
+        // Fallback: normalize to ISO
+        let normalized = s.replace(" ", "T").replace(/\..*/, "");
+        const d = new Date(normalized);
+        if (!isNaN(d.getTime())) {
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const hh = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            return { date: `${yyyy}-${mm}-${dd}`, time: `${hh}:${min}` };
+        }
+    } catch (e) {
+        console.log(e);
+    }
+    return { date: String(start_time), time: "" };
 }
 
 function buildRightSection(job, idsplit, authenticated) {

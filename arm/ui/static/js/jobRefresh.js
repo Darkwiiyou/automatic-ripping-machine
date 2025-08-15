@@ -162,7 +162,7 @@ function updateJobItem(oldJob, job) {
     const status = $(`#jobId${job.job_id}_status`);
     // Update card header ( Title (Year) ) using same logic as initial render
     const expectedHeader = titleManual(job);
-    if (cardHeader[0].innerText !== expectedHeader) {
+    if (cardHeader[0] && cardHeader[0].innerText !== expectedHeader) {
         cardHeader[0].innerText = expectedHeader;
     }
     // Update card poster image
@@ -180,6 +180,11 @@ function updateJobItem(oldJob, job) {
     updateContents($(`#jobId${job.job_id}_devpath`), job, "Device", job.devpath);
     updateContents($(`#jobId${job.job_id}_video_type`), job, "Type", job.video_type);
     updateProgress(job, oldJob);
+    // Also keep Start Date/Time and Job Time in sync if they change
+    const dt = formatStartDateTime(job.start_time);
+    updateContents($(`#jobId${job.job_id}_start_date`), job, "Start Date", dt.date);
+    updateContents($(`#jobId${job.job_id}_start_time`), job, "Start Time", dt.time);
+    updateContents($(`#jobId${job.job_id}_job_time`), job, "Job Time", job.job_length === undefined ? "Ongoing" : job.job_length);
     updateContents($(`#jobId${job.job_id}_RIPMETHOD`), job, "Rip Method", job.config.RIPMETHOD);
     updateContents($(`#jobId${job.job_id}_MAINFEATURE`), job, "Main Feature", job.config.MAINFEATURE);
     updateContents($(`#jobId${job.job_id}_MINLENGTH`), job, "Min Length", job.config.MINLENGTH);
