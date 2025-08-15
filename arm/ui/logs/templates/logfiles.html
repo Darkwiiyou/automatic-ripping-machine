@@ -118,15 +118,19 @@
         activeTab("viewlogs");
 
         window.deleteLog = function(logfile, btn) {
-            if (!confirm(`Delete log ${logfile}?`)) return;
-            $.post('/logs/delete', { logfile: logfile })
-                .done(function(resp){
-                    const row = btn.closest('tr');
-                    row.parentNode.removeChild(row);
-                })
-                .fail(function(xhr){
-                    alert('Failed to delete log: ' + (xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : 'unknown error'));
-                });
+            if (!confirm('Delete log ' + logfile + '?')) return;
+            $.ajax({
+                url: '/logs/delete',
+                type: 'POST',
+                data: { logfile: logfile, csrf_token: '{{ csrf_token() }}' }
+            }).done(function(resp){
+                const row = btn.closest('tr');
+                row.parentNode.removeChild(row);
+            }).fail(function(xhr){
+                var msg = 'unknown error';
+                try { if (xhr.responseJSON && xhr.responseJSON.error) { msg = xhr.responseJSON.error; } } catch(e) {}
+                alert('Failed to delete log: ' + msg);
+            });
         }
     </script>
 {% endblock %}

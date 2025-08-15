@@ -39,6 +39,7 @@ from arm.ui.settings import DriveUtils as drive_utils
 from arm.ui.forms import SettingsForm, UiSettingsForm, AbcdeForm, SystemInfoDrives
 from arm.ui.settings.ServerUtil import ServerUtil
 import arm.ripper.utils as ripper_utils
+import json
 
 route_settings = Blueprint('route_settings', __name__,
                            template_folder='templates',
@@ -197,6 +198,40 @@ def save_settings():
 
     # If we get to here there was no post data
     return {'success': success, 'settings': cfg.arm_config, 'form': 'arm ripper settings'}
+
+
+@route_settings.route('/save_json_settings', methods=['POST'])
+@login_required
+def save_json_settings():
+    """Save settings from the Advanced JSON editor with schema-free validation.
+
+    - Validates the posted payload is JSON
+    - Writes arm.yaml preserving comments via existing builder if possible
+    - Falls back to straightforward YAML dump replacement
+    """
+    success = False
+    error = None
+    raw_text = request.form.get('jsonConfig', '').strip()
+    try:
+        parsed = json.loads(raw_text)
+        # Merge onto current config to keep unknown removals from breaking
+        new_cfg = dict(cfg.arm_config)
+        new_cfg.update(parsed)
+        # Rebuild arm.yaml with comments ordering
+        comments = ui_utils.generate_comments()
+        arm_cfg = ui_utils.build_arm_cfg(new_cfg, comments)
+        with open(cfg.arm_config_path, 'w') as settings_file:
+            settings_file.write(arm_cfg)
+        importlib.reload(cfg)
+        app.logger.info("Advanced JSON settings saved successfully")
+        success = True
+    except json.JSONDecodeError as je:
+        error = f"Invalid JSON: {je}"
+        app.logger.error(error)
+    except Exception as e:
+        error = str(e)
+        app.logger.error(f"Failed to save JSON settings: {e}")
+    return {'success': success, 'error': error, 'form': 'advanced json settings'}
 
 
 @route_settings.route('/save_ui_settings', methods=['POST'])

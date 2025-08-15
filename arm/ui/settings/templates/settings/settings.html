@@ -2,6 +2,29 @@
 
 {% block content %}
     <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+    <script>
+      // Lightweight JSON validation for Advanced JSON editor
+      document.addEventListener('DOMContentLoaded', function() {
+        const ta = document.getElementById('jsonConfig');
+        const err = document.getElementById('jsonError');
+        const btn = document.getElementById('jsonSubmit');
+        if (!ta || !err || !btn) return;
+        const validate = () => {
+          try {
+            JSON.parse(ta.value);
+            err.classList.add('d-none');
+            err.textContent = '';
+            btn.removeAttribute('disabled');
+          } catch (e) {
+            err.classList.remove('d-none');
+            err.textContent = e.message;
+            btn.setAttribute('disabled', 'disabled');
+          }
+        };
+        ta.addEventListener('input', validate);
+        validate();
+      });
+    </script>
     <style>
         .popover {
             white-space: pre-line;
@@ -62,6 +85,10 @@
                                aria-controls="settings" aria-selected="false">Ripper Settings</a>
                         </li>
                         <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="json-tab" data-toggle="tab" href="#jsonEditor" role="tab"
+                               aria-controls="jsonEditor" aria-selected="false">Advanced JSON</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
                             <a class="nav-link" id="uiSettingsTab-tab" data-toggle="tab" href="#uiSettingsTab"
                                role="tab"
                                aria-controls="uiSettingsTab" aria-selected="false">UI Settings</a>
@@ -88,6 +115,8 @@
                         {% include 'settings/abcde.html' %}
                         <!-- Ripper settings -->
                         {% include 'settings/ripper.html' %}
+                        <!-- JSON editor -->
+                        {% include 'settings/json_editor.html' %}
                         <!-- UI settings -->
                         {% include 'settings/ui.html' %}
                         <!-- Apprise config -->
@@ -117,8 +146,8 @@
                     if (data.success === true) {
                         console.log(data)
                         var dt = new Date();
-                        var time = `${dt.getHours()}:${dt.getMinutes()}:${dt.getSeconds()}`;
-                        addToast("Saved Successfully", `Saved ${data.form} settings at ${time}`, toastCount);
+                        var time = dt.getHours() + ":" + dt.getMinutes() + ":" + dt.getSeconds();
+                        addToast("Saved Successfully", "Saved " + data.form + " settings at " + time, toastCount);
                         toastCount++;
                     }
                 });
@@ -147,11 +176,14 @@
             $(".popovers").popover({
                 trigger: "hover",
             });
-            {% if form.errors %}
-                {% for k in form.errors %}
-                    $("[name='{{k}}']").addClass("is-invalid");
-                {% endfor %}
-            {% endif %}
+            try {
+                var formErrorsStr = '{{ form.errors | tojson | safe }}';
+                var formErrors = {};
+                try { formErrors = JSON.parse(formErrorsStr); } catch(e) { formErrors = {}; }
+                Object.keys(formErrors || {}).forEach(function(k){
+                    $("[name='"+k+"']").addClass("is-invalid");
+                });
+            } catch (e) { /* ignore templating/json issues */ }
             activeTab("armsettings");
         });
     </script>
