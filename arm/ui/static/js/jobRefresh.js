@@ -66,9 +66,7 @@ function updateProgress(job, oldJob) {
                              ${job.progress}%
                              </small></div></div>`;
     // Use the same grid-based markup used elsewhere for alignment
-    const mainProgressBar = `<div id=\"jobId${job.job_id}_stage\" class=\"job-meta\"><span class=\"label\">Stage:</span><span>${job.stage}</span></div>
-                             <div id=\"jobId${job.job_id}_progress\" class=\"progress-indent\"><div class=\"progress\">${subProgressBar}</div></div>
-                             <div id=\"jobId${job.job_id}_eta\" class=\"job-meta\"><span class=\"label\">ETA:</span><span>${job.eta}</span></div>`;
+    const mainProgressBar = `<div id=\"jobId${job.job_id}_progress\" class=\"progress-indent\"><div class=\"progress\">${subProgressBar}</div></div>`;
     const progressSection = $(`#jobId${job.job_id}_progress_section`);
     const stage = $(`#jobId${job.job_id}_stage`);
     const eta = $(`#jobId${job.job_id}_eta`);

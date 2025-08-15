@@ -61,15 +61,13 @@ function addJobItem(job, authenticated) {
 function transcodingCheck(job) {
     let x = "";
     if (job.status === "transcoding" && job.stage !== "" && job.progress || job.disctype === "music" && job.stage !== "") {
-        x += `<div id="jobId${job.job_id}_stage" class="job-meta"><span class="label">Stage:</span><span>${job.stage}</span></div>`;
-        x += `<div id="jobId${job.job_id}_progress">`;
-        x += `<div class="progress">
-                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
-                aria-valuenow="${job.progress_round}" aria-valuemin="0" aria-valuemax="100"
-                style="width: ${job.progress_round}%; background-color: #6c757d;">
+        x += `<div id=\"jobId${job.job_id}_progress\">`;
+        x += `<div class=\"progress\">
+                <div class=\"progress-bar progress-bar-striped progress-bar-animated\" role=\"progressbar\"
+                aria-valuenow=\"${job.progress_round}\" aria-valuemin=\"0\" aria-valuemax=\"100\"
+                style=\"width: ${job.progress_round}%; background-color: #6c757d;\">
                 </div>
               </div></div>`;
-        x += `<div id="jobId${job.job_id}_eta" class="job-meta"><span class="label">ETA:</span><span>${job.eta}</span></div>`;
     }
     return x;
 }
@@ -117,8 +115,12 @@ function buildMiddleSection(job) {
     x += `<div id=\"jobId${job.job_id}_year\" class=\"job-meta\"><span class=\"label\">Year:</span><span>${job.year}</span></div>`;
     x += `<div id=\"jobId${job.job_id}_video_type\" class=\"job-meta\"><span class=\"label\">Type:</span><span>${job.video_type}</span></div>`;
     x += `<div id=\"jobId${job.job_id}_devpath\" class=\"job-meta\"><span class=\"label\">Device:</span><span>${job.devpath}</span></div>`;
-    // Stage/Progress/ETA injected when active
+    // Stage row (always present for alignment)
+    x += `<div id=\"jobId${job.job_id}_stage\" class=\"job-meta\"><span class=\"label\">Stage:</span><span>${job.stage ? job.stage : ""}</span></div>`;
+    // Progress bar injected when active
     x += `<div id=\"jobId${job.job_id}_progress_section\" class=\"progress-indent\">${transcodingCheck(job)}</div>`;
+    // ETA row (always present for alignment)
+    x += `<div id=\"jobId${job.job_id}_eta\" class=\"job-meta\"><span class=\"label\">ETA:</span><span>${job.eta ? job.eta : ""}</span></div>`;
     // Start date/time and job time always shown, with robust parsing
     const dt = formatStartDateTime(job.start_time);
     x += `<div id=\"jobId${job.job_id}_start_date\" class=\"job-meta\"><span class=\"label\">Start Date:</span><span>${dt.date}</span></div>`;
