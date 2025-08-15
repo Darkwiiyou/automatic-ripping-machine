@@ -54,6 +54,28 @@ Everything from upstream applies. Additional options in this fork:
 
 Docker and manual installs follow the upstream instructions. Refer to the upstream wiki for platform specifics.
 
+### Edited dependencies repo used by this fork
+
+This fork builds against an edited `arm-dependencies` repository to keep tooling current and enable faketime/ddrescue workflows. You can view the exact tree used here:
+
+- https://github.com/Darkwiiyou/arm-dependencies/tree/8b68241ecc23cef1d905cc747ab890041a266fe7
+
+If you consume this as a submodule, point to that repo/commit and use its `requirements.txt` to stay in sync.
+
+### Prebuilt Docker images (linux/amd64)
+
+If you prefer to run prebuilt images:
+
+- Application image: `darkwiiyou/automatic-ripping-machine:latest`
+- Base dependencies image: `darkwiiyou/arm-dependencies`
+
+Example pulls:
+
+```bash
+docker pull darkwiiyou/automatic-ripping-machine:latest
+docker pull darkwiiyou/arm-dependencies
+```
+
 
 ## Usage
 
