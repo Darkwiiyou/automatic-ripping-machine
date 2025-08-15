@@ -59,14 +59,14 @@ $(document).ready(function () {
  * @param    {Class} oldJob    Copy of old job
  */
 function updateProgress(job, oldJob) {
-    const subProgressBar = `<div class=\"progress-bar progress-bar-striped progress-bar-animated\" role=\"progressbar\" 
-                             aria-valuenow=\"${job.progress_round}\" aria-valuemin=\"0\" aria-valuemax=\"100\" 
-                             style=\"width: ${job.progress_round}%\">
-                             <small class=\"justify-content-center d-flex position-absolute w-100\" style=\"color: black; z-index: 2;\">
+    const subProgressBar = `<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
+                             aria-valuenow="${job.progress_round}" aria-valuemin="0" aria-valuemax="100" 
+                             style="width: ${job.progress_round}%">
+                             <span class="progress-label d-flex justify-content-center position-absolute w-100" style="color: black; z-index: 2; left: 0;">
                              ${job.progress}%
-                             </small></div></div>`;
+                             </span></div>`;
     // Use the same grid-based markup used elsewhere for alignment
-    const mainProgressBar = `<div id=\"jobId${job.job_id}_progress\" class=\"progress-indent\"><div class=\"progress\">${subProgressBar}</div></div>`;
+    const mainProgressBar = `<div id="jobId${job.job_id}_progress" class="progress-indent"><div class="progress">${subProgressBar}</div></div>`;
     const progressSection = $(`#jobId${job.job_id}_progress_section`);
     const stage = $(`#jobId${job.job_id}_stage`);
     const eta = $(`#jobId${job.job_id}_eta`);
@@ -81,10 +81,10 @@ function updateProgress(job, oldJob) {
                 if (el) {
                     el.style.width = `${job.progress_round}%`;
                     el.setAttribute('aria-valuenow', job.progress_round);
-                    let small = el.querySelector('small');
-                    if (small) small.innerText = `${job.progress}%`;
+                    let label = el.querySelector('.progress-label');
+                    if (label) label.innerText = `${job.progress}%`;
                 } else {
-                    progressBarDiv[0].innerHTML = `<div class="progress">${subProgressBar}`;
+                    progressBarDiv[0].innerHTML = `<div class="progress">${subProgressBar}</div>`;
                 }
             }
             updateContents(stage, job, "Stage", job.stage);
