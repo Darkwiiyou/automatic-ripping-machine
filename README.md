@@ -1,82 +1,75 @@
-# Automatic Ripping Machine (ARM)
-[![CI](https://github.com/automatic-ripping-machine/automatic-ripping-machine/actions/workflows/main.yml/badge.svg)](https://github.com/automatic-ripping-machine/automatic-ripping-machine/actions/workflows/main.yml) [![Publish Docker Image](https://github.com/automatic-ripping-machine/automatic-ripping-machine/actions/workflows/publish-image.yml/badge.svg)](https://github.com/automatic-ripping-machine/automatic-ripping-machine/actions/workflows/publish-image.yml)
-[![Docker](https://img.shields.io/docker/pulls/automaticrippingmachine/automatic-ripping-machine.svg)](https://hub.docker.com/r/automaticrippingmachine/automatic-ripping-machine)
+# Automatic Ripping Machine (ARM) — With faketime / ddrescue
 
-[![GitHub forks](https://img.shields.io/github/forks/automatic-ripping-machine/automatic-ripping-machine)](https://github.com/automatic-ripping-machine/automatic-ripping-machine/network)
-[![GitHub stars](https://img.shields.io/github/stars/automatic-ripping-machine/automatic-ripping-machine)](https://github.com/automatic-ripping-machine/automatic-ripping-machine/stargazers)
-[![GitHub issues](https://img.shields.io/github/issues/automatic-ripping-machine/automatic-ripping-machine)](https://github.com/automatic-ripping-machine/automatic-ripping-machine/issues)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/automatic-ripping-machine/automatic-ripping-machine)](https://github.com/automatic-ripping-machine/automatic-ripping-machine/pulls)
-[![GitHub contributors](https://img.shields.io/github/contributors/automatic-ripping-machine/automatic-ripping-machine)](https://github.com/automatic-ripping-machine/automatic-ripping-machine/graphs/contributors)
-[![GitHub last commit](https://img.shields.io/github/last-commit/automatic-ripping-machine/automatic-ripping-machine?)](https://github.com/automatic-ripping-machine/automatic-ripping-machine/commits/main)
+This repository is a user-focused fork of the upstream Automatic Ripping Machine, with a smoother UI and first-class support for faketime and ddrescue. It keeps the core functionality of ARM but improves day‑to‑day usability and resiliency.
 
-[![GitHub license](https://img.shields.io/github/license/automatic-ripping-machine/automatic-ripping-machine)](https://github.com/automatic-ripping-machine/automatic-ripping-machine/blob/main/LICENSE)
-
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/automatic-ripping-machine/automatic-ripping-machine?label=Latest%20Stable%20Version)](https://github.com/automatic-ripping-machine/automatic-ripping-machine/releases)
-[![GitHub release Date](https://img.shields.io/github/release-date/automatic-ripping-machine/automatic-ripping-machine?label=Latest%20Stable%20Released)](https://github.com/automatic-ripping-machine/automatic-ripping-machine/releases)
-![Python Versions](https://img.shields.io/badge/Python_Versions-3.9_|_3.10_|_3.11_|_3.12-blue?logo=python)
+Upstream project: [automatic-ripping-machine/automatic-ripping-machine](https://github.com/automatic-ripping-machine/automatic-ripping-machine)
 
 
+## What’s new in this fork
 
-[![Wiki](https://img.shields.io/badge/Wiki-Get%20Help-brightgreen)](https://github.com/automatic-ripping-machine/automatic-ripping-machine/wiki)
-[![Discord](https://img.shields.io/discord/576479573886107699)](https://discord.gg/FUSrn8jUcR)
+- UI polish for Active Rips
+  - Consistent, aligned layout for all fields (labels/values grid)
+  - Poster anchored to the right; header status icon; long titles are truncated cleanly
+  - Robust Start Date/Time/Job Time rendering (handles DB formats reliably)
+  - Progress bar reworked with an in-bar percentage label (left‑anchored)
+  - Stage display is smarter: clearly shows Scanning, Ripping, Transcoding, Waiting, and appends detailed steps when available (e.g., `Track 3/10`)
+- ddrescue integration
+  - When ddrescue is used to create an ISO from damaged media, the UI shows stage, ETA, and progress parsed from ddrescue logs
+  - Install helper included (see `arm-dependencies/scripts/install_ddrescue.sh`)
+- Optional faketime signal
+  - When MakeMKV is invoked under faketime, the UI labels the stage accordingly so it’s visible in Active Rips
+  - Install helper included (see `arm-dependencies/scripts/install_faketime.sh`)
+- Status naming consistency
+  - Ripping/transcoding stages map to friendly names: Scanning → Ripping → Transcoding → Waiting → Finished
 
 
+## Overview (inherits from upstream)
 
-## Overview
+Insert an optical disc (Blu‑ray, DVD, CD). ARM detects the disc type, rips it, and (optionally) transcodes it.
 
-Insert an optical disc (Blu-ray, DVD, CD) and checks to see if it's audio, video (Movie or TV), or data, then rips it.
-
-See: https://b3n.org/automatic-ripping-machine
+See upstream for a comprehensive feature list and docs: [ARM on GitHub](https://github.com/automatic-ripping-machine/automatic-ripping-machine)
 
 
-## Features
+## Highlights
 
-- Detects insertion of disc using udev
-- Determines disc type...
-  - If video (Blu-ray or DVD)
-    - Retrieve title from disc or [OMDb API](http://www.omdbapi.com/) to name the folder "Movie Title (Year)" so that Plex or Emby can pick it up
-    - Determine if video is Movie or TV using [OMDb API](http://www.omdbapi.com/)
-    - Rip using MakeMKV or HandBrake (can rip all features or main feature)
-    - Eject disc and queue up Handbrake transcoding when done
-    - Transcoding jobs are asynchronously batched from ripping
-    - Send notifications via IFTTT, Pushbullet, Slack, Discord, and many more!
-  - If audio (CD) - rip using abcde (get disc-data and album art from [musicbrainz](https://musicbrainz.org/))
-  - If data (Blu-ray, DVD, DVD-Audio or CD) - make an ISO backup
-- Headless, designed to be run from a server
-- Can rip from multiple-optical drives in parallel
-- Python Flask UI to interact with ripping jobs, view logs, update jobs, etc
+- Detects disc insertion via udev
+- Determines disc type (video, audio, data)
+- Video: MakeMKV rip, HandBrake transcode; TV/Movie metadata lookups
+- Audio CDs: abcde with MusicBrainz metadata and cover art
+- Data discs: ISO backups; integrates ddrescue when configured
+- Multiple optical drives supported; headless server friendly
+- Flask UI for jobs, logs, and settings
 
+
+## Installation notes
+
+Everything from upstream applies. Additional options in this fork:
+
+- faketime (optional):
+  - Install via helper script: `arm-dependencies/scripts/install_faketime.sh`
+  - If the system is configured to run MakeMKV under faketime, Active Rips will display “MakeMKV (faketime)” in the stage.
+- ddrescue (optional but recommended for damaged media):
+  - Install via helper script: `arm-dependencies/scripts/install_ddrescue.sh`
+  - When enabled in your workflow, ddrescue progress is parsed and displayed in Active Rips.
+
+Docker and manual installs follow the upstream instructions. Refer to the upstream wiki for platform specifics.
 
 
 ## Usage
 
-- Insert disc
-- Wait for disc to eject
-- Repeat
+1. Insert a disc
+2. Watch progress in Active Rips (Scanning → Ripping → Transcoding)
+3. Wait for the disc to eject
+4. Repeat
 
-
-## Requirements
-
-- A system capable of running Docker containers
-- One or more optical drives to rip Blu-rays, DVDs, and CDs
-- Lots of drive space (I suggest using a NAS) to store your movies
-
-
-## Install
-
-[For normal installation please see the wiki](https://github.com/automatic-ripping-machine/automatic-ripping-machine/wiki/).
-
-[For docker installation please see here](https://github.com/automatic-ripping-machine/automatic-ripping-machine/wiki/docker).
 
 ## Troubleshooting
- [Please see the wiki for troubleshooting](https://github.com/automatic-ripping-machine/automatic-ripping-machine/wiki/).
 
-## Contributing
+Please see the upstream wiki for general troubleshooting and configuration guidance. This fork keeps parity with upstream documentation: [ARM Wiki](https://github.com/automatic-ripping-machine/automatic-ripping-machine/wiki)
 
-Pull requests are welcome.  Please see the [Contributing Guide](https://github.com/automatic-ripping-machine/automatic-ripping-machine/wiki/Contributing-Guide)
 
-If you set ARM up in a different environment (hardware/OS/virtual/etc.), please consider [submitting a howto to the wiki](https://github.com/automatic-ripping-machine/automatic-ripping-machine/wiki).
+## Credits and License
 
-## License
+- Based on the excellent upstream ARM project: [automatic-ripping-machine/automatic-ripping-machine](https://github.com/automatic-ripping-machine/automatic-ripping-machine)
+- This repository remains MIT licensed. See [LICENSE](LICENSE).
 
-[MIT License](LICENSE)
